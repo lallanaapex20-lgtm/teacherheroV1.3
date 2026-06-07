@@ -171,7 +171,17 @@ body,html{width:100%;height:100%;overflow:hidden;background:black;font-family:sa
 .hp-text{font-size:clamp(10px,1.3vw,12px);color:rgba(255,255,255,0.5);margin-top:3px;text-align:right;}
 #battleStage{position:fixed;bottom:0;left:0;right:0;height:55%;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;padding:0 clamp(10px,4vw,60px) clamp(150px,26vw,240px);pointer-events:none;}
 #playerSprite{width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 8px 20px rgba(0,200,100,0.4));transform-origin:bottom center;position:relative;z-index:3;}
-#bossSprite{width:clamp(300px,50vw,650px);height:clamp(300px,50vw,650px);object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 8px 20px rgba(220,50,50,0.5));transform:scaleX(-1);transform-origin:bottom center;position:relative;z-index:3;}
+#bossSprite{
+    width:clamp(220px,35vw,480px);
+    height:clamp(220px,35vw,480px);
+    object-fit:contain;
+    image-rendering:pixelated;
+    filter:drop-shadow(0 8px 20px rgba(220,50,50,0.5));
+    transform:scaleX(-1);
+    transform-origin:bottom center;
+    position:relative;
+    z-index:3;
+}
 @keyframes playerAttack{0%{transform:translateX(0);}30%{transform:translateX(clamp(80px,18vw,200px)) scale(1.15);}55%{transform:translateX(clamp(80px,18vw,200px)) scale(0.95);}100%{transform:translateX(0);}}
 .player-attacking{animation:playerAttack 0.65s cubic-bezier(0.25,0.46,0.45,0.94) forwards;}
 @keyframes bossAttack{0%{transform:scaleX(-1) translateX(0);}30%{transform:scaleX(-1) translateX(clamp(80px,18vw,200px)) scale(1.15);}55%{transform:scaleX(-1) translateX(clamp(80px,18vw,200px)) scale(0.95);}100%{transform:scaleX(-1) translateX(0);}}
@@ -236,7 +246,7 @@ body,html{width:100%;height:100%;overflow:hidden;background:black;font-family:sa
 #playerTag{position:fixed;top:0;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#ffcc00;padding:4px 16px;border-radius:0 0 12px 12px;font-size:13px;z-index:999;}
 #adminBtn{position:fixed;bottom:10px;left:10px;z-index:999;font-size:13px;cursor:pointer;background:rgba(0,0,0,0.5);color:#aaa;padding:6px 10px;border-radius:10px;display:none;}
 #vocabBtn{position:fixed;bottom:10px;left:90px;z-index:999;font-size:13px;cursor:pointer;background:rgba(255,204,0,0.15);color:#ffcc00;padding:6px 12px;border-radius:10px;display:none;border:1px solid rgba(255,204,0,0.3);}
-#leaderboardBtn{position:fixed;bottom:10px;left:185px;z-index:999;font-size:14px;cursor:pointer;background:rgba(0,0,0,0.5);color:#ffcc00;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,204,0,0.4);display:none;font-weight:bold;}
+#leaderboardBtn{position:fixed;bottom:10px;left:10px;z-index:999;font-size:14px;cursor:pointer;background:rgba(0,0,0,0.5);color:#ffcc00;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,204,0,0.4);display:none;font-weight:bold;}
 /* LEADERBOARD */
 #leaderboardScreen{display:none;position:fixed;width:100%;height:100%;background:linear-gradient(160deg,#06001a 0%,#030d2a 45%,#001508 100%);z-index:300;overflow-y:auto;}
 #lbInner{position:relative;z-index:1;}
@@ -287,6 +297,40 @@ body,html{width:100%;height:100%;overflow:hidden;background:black;font-family:sa
 #battleOverlayText{font-size:clamp(48px,10vw,100px);font-weight:900;text-shadow:0 0 40px currentColor;animation:overlayPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);}
 @keyframes overlayPop{0%{transform:scale(0) rotate(-10deg);opacity:0;}60%{transform:scale(1.2) rotate(3deg);}100%{transform:scale(1) rotate(0);}}
 @media (max-width:768px){.lb-row{grid-template-columns:32px 36px 1fr 80px 60px 70px;gap:5px;padding:9px 10px;}}
+#startScreen{
+    background:url('start_bg.png') center/cover no-repeat;
+    position:fixed;
+    width:100%;
+    height:100%;
+}
+
+/* ปุ่ม START */
+#startBtn{
+    position:absolute;
+    bottom:120px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:15px 40px;
+    font-size:22px;
+    background:#ffcc00;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+}
+
+/* ปุ่ม INFO */
+#infoBtn{
+    position:absolute;
+    bottom:50px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:12px 30px;
+    font-size:18px;
+    background:#ffffff;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+}
 </style>
 </head>
 <body>
@@ -513,9 +557,10 @@ body,html{width:100%;height:100%;overflow:hidden;background:black;font-family:sa
 
 <!-- GAME SCREENS -->
 <div id="startScreen" class="screen" style="display:none;">
-  <h1 style="color:white">⚔️ Teacher Hero</h1>
-  <button onclick="goMap()">START</button>
-  <button onclick="showInfo()" style="margin-top:10px;">INFO</button>
+
+  <button id="startBtn" onclick="goMap()">START</button>
+
+  <button id="infoBtn" onclick="showInfo()">INFO</button>
 </div>
 <div id="infoScreen" class="screen" style="display:none;background:rgba(0,0,0,0.9);color:white;text-align:center;">
   <h2>📘 ข้อมูลผู้จัดทำ</h2>
