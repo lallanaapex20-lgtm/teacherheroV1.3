@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Classroom Battle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body,html{width:100%;height:100%;overflow:hidden;background:black;font-family:sans-serif}
+#loginScreen{position:fixed;width:100%;height:100%;display:flex;justify-content:center;align-items:center;flex-direction:column;background:linear-gradient(135deg,#1a0533 0%,#0d1b4b 50%,#0a2a1a 100%);z-index:100;}
+#loginBox{background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.2);border-radius:20px;padding:40px 35px;text-align:center;backdrop-filter:blur(10px);width:clamp(280px,85vw,420px);}
+#loginBox h2{color:#ffcc00;font-size:28px;margin-bottom:6px;}
+#loginBox p{color:#aaa;font-size:13px;margin-bottom:25px;}
+#loginBox input{width:100%;padding:12px 16px;border-radius:10px;border:2px solid rgba(255,204,0,0.4);background:rgba(255,255,255,0.08);color:white;font-size:16px;margin-bottom:12px;outline:none;}
+#loginBox input::placeholder{color:#888;}
+#loginBox input:focus{border-color:#ffcc00;}
+#loginBtn{width:100%;padding:13px;background:#ffcc00;border:none;border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;color:#111;margin-top:5px;}
+#loginBtn:active{transform:scale(0.97);}
+#loginMsg{color:#ff6b6b;font-size:13px;margin-top:10px;min-height:18px;}
+#loginLoading{color:#ffcc00;font-size:13px;margin-top:10px;display:none;}
+/* ADMIN */
+#adminPanel{display:none;position:fixed;width:100%;height:100%;background:#0d0d1a;z-index:200;overflow-y:auto;}
+#adminPanel h1{color:#ffcc00;text-align:center;padding:20px;font-size:24px;border-bottom:1px solid #333;}
+#adminTable{width:94%;margin:20px auto;border-collapse:collapse;font-size:14px;color:white;}
+#adminTable th{background:#1e1e3a;padding:10px 8px;border:1px solid #333;color:#ffcc00;}
+#adminTable td{padding:8px;border:1px solid #222;text-align:center;}
+#adminTable tr:nth-child(even){background:#111128;}
+.admin-close-btn{display:block;margin:10px auto 30px;padding:10px 30px;background:#ffcc00;border:none;border-radius:10px;font-size:16px;cursor:pointer;font-weight:bold;}
+.admin-refresh-btn{display:block;margin:0 auto 10px;padding:8px 20px;background:#333;border:none;border-radius:8px;color:white;font-size:14px;cursor:pointer;}
+/* VOCAB+STAGE MANAGER */
+#vocabManager{display:none;position:fixed;width:100%;height:100%;background:#0a0a1a;z-index:200;overflow-y:auto;font-family:sans-serif;}
+#vmInner{max-width:920px;margin:0 auto;padding:20px 16px 60px;}
+#vmInner h1{color:#ffcc00;font-size:22px;margin-bottom:4px;}
+.vm-sub{color:#555;font-size:13px;margin-bottom:20px;}
+.vm-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid #222;flex-wrap:wrap;}
+.vm-tab{padding:10px 16px;background:transparent;border:none;color:#666;font-size:14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;white-space:nowrap;}
+.vm-tab.active{color:#ffcc00;border-bottom-color:#ffcc00;font-weight:bold;}
+.vm-tab:hover:not(.active){color:white;}
+.vm-section{display:none;}
+.vm-section.active{display:block;}
+.vm-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-bottom:20px;}
+.vm-stat{background:#111128;border:1px solid #1e1e3a;border-radius:12px;padding:12px;text-align:center;}
+.vm-stat .n{font-size:22px;font-weight:bold;color:#ffcc00;}
+.vm-stat .l{font-size:11px;color:#555;margin-top:2px;}
+.vm-filter{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.vm-filter label{color:#666;font-size:13px;}
+.vm-filter select{background:#111128;border:1px solid #333;border-radius:8px;color:white;padding:6px 10px;font-size:13px;}
+.vm-word-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px;}
+.vm-word-card{background:#111128;border:1px solid #1e1e3a;border-radius:12px;padding:10px;text-align:center;position:relative;}
+.vm-wc-img{width:60px;height:60px;background:#0d0d20;border-radius:8px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.vm-wc-img img{width:100%;height:100%;object-fit:contain;}
+.vm-wc-name{font-size:12px;font-weight:bold;color:white;margin-bottom:4px;}
+.vm-lvbadge-row{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;}
+.vm-lvbadge{font-size:10px;padding:1px 6px;border-radius:4px;background:#1e1e3a;color:#888;border:1px solid #2a2a4a;}
+.vm-lvbadge.active-lv{background:#2a2060;color:#a090ff;border-color:#4a3a90;}
+.vm-del-btn{position:absolute;top:5px;right:5px;background:#2a0a0a;border:1px solid #500;border-radius:5px;color:#ff6060;font-size:11px;padding:2px 5px;cursor:pointer;opacity:0;transition:opacity 0.15s;}
+.vm-word-card:hover .vm-del-btn{opacity:1;}
+.vm-card{background:#111128;border:1px solid #1e1e3a;border-radius:14px;padding:20px;margin-bottom:16px;}
+.vm-card h3{color:#ffcc00;font-size:15px;margin-bottom:14px;}
+.vm-form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.vm-form-group{display:flex;flex-direction:column;gap:6px;}
+.vm-form-group label{font-size:13px;color:#888;}
+.vm-form-group input[type=text],.vm-form-group input[type=number],.vm-form-group select{background:#0d0d20;border:1px solid #2a2a4a;border-radius:8px;color:white;padding:10px 12px;font-size:14px;outline:none;width:100%;}
+.vm-form-group input:focus,.vm-form-group select:focus{border-color:#ffcc00;}
+.vm-cb-row{display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;}
+.vm-cb-item{display:flex;align-items:center;gap:5px;font-size:13px;color:#ccc;cursor:pointer;}
+.vm-cb-item input{width:15px;height:15px;cursor:pointer;accent-color:#ffcc00;}
+.vm-preview-wrap{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;}
+.vm-preview-box{width:80px;height:80px;background:#0d0d20;border:1px solid #2a2a4a;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#555;overflow:hidden;flex-shrink:0;}
+.vm-preview-box img{width:100%;height:100%;object-fit:contain;}
+.vm-upload-zone{flex:1;background:#0d0d20;border:1px dashed #2a2a4a;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:border-color 0.15s;}
+.vm-upload-zone:hover{border-color:#ffcc00;}
+.vm-upload-zone input[type=file]{display:none;}
+.vm-upload-zone .uz-icon{font-size:22px;margin-bottom:4px;}
+.vm-upload-zone .uz-text{font-size:13px;color:#888;}
+.vm-upload-zone .uz-note{font-size:11px;color:#555;margin-top:4px;}
+.vm-upload-zone .uz-fname{font-size:12px;color:#88aaff;margin-top:6px;}
+.vm-btn-row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+.vm-btn{padding:9px 18px;border-radius:9px;border:1px solid #333;background:#1a1a2e;color:#ccc;font-size:14px;cursor:pointer;transition:all 0.15s;}
+.vm-btn:hover{background:#222244;color:white;}
+.vm-btn.primary{background:#ffcc00;border-color:#ffcc00;color:#111;font-weight:bold;}
+.vm-btn.primary:hover{background:#ffe066;}
+.vm-info{background:#111128;border:1px solid #1e3a1e;border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#888;line-height:1.8;}
+.vm-info strong{color:#88cc88;}
+.vm-info code{background:#0d0d20;border:1px solid #2a2a4a;border-radius:4px;padding:1px 6px;font-family:monospace;font-size:12px;color:#88aaff;}
+/* STAGE LIST */
+.stage-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.stage-row{background:#111128;border:1px solid #1e1e3a;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.stage-badge{font-size:11px;padding:3px 9px;border-radius:6px;font-weight:bold;white-space:nowrap;}
+.badge-battle{background:#1a0033;color:#cc88ff;border:1px solid #440066;}
+.badge-match{background:#001a33;color:#88ccff;border:1px solid #003366;}
+.badge-memory{background:#001a1a;color:#88ffee;border:1px solid #006644;}
+.stage-info{flex:1;min-width:120px;}
+.stage-label{font-size:14px;color:white;font-weight:bold;}
+.stage-meta{font-size:11px;color:#555;margin-top:2px;}
+.stage-lv-badge{font-size:11px;padding:2px 8px;border-radius:5px;background:#1e1e3a;color:#888;border:1px solid #2a2a4a;white-space:nowrap;}
+.stage-del{background:#2a0a0a;border:1px solid #500;border-radius:8px;color:#ff6060;font-size:12px;padding:5px 10px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.stage-del:hover{background:#400;}
+/* LEVEL MANAGER */
+.level-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.level-row{background:#111128;border:1px solid #1e1e3a;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.level-num{font-size:22px;font-weight:900;color:#ffcc00;width:36px;text-align:center;flex-shrink:0;}
+.level-info{flex:1;min-width:100px;}
+.level-name{font-size:14px;color:white;font-weight:bold;}
+.level-meta{font-size:11px;color:#555;margin-top:2px;}
+.level-del{background:#2a0a0a;border:1px solid #500;border-radius:8px;color:#ff6060;font-size:12px;padding:5px 10px;cursor:pointer;}
+.vm-loading{text-align:center;color:#ffcc00;padding:30px;font-size:14px;}
+.vm-empty{text-align:center;color:#444;padding:40px;font-size:14px;}
+.vm-close-btn{display:block;margin:10px auto;padding:10px 30px;background:#222;border:1px solid #444;border-radius:10px;color:#ccc;font-size:15px;cursor:pointer;}
+#vmToast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a2e;border:1px solid #333;border-radius:12px;padding:10px 20px;color:white;font-size:14px;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;}
+#vmToast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* GAME */
+#timerBar{position:fixed;top:95vh;left:50%;transform:translateX(-50%);width:clamp(80px,40vw,100px);height:12px;background:#333;border-radius:10px;z-index:4;}
+#timerFill{height:100%;background:orange;border-radius:10px;width:100%;transition:0.3s;}
+#soundBtn{position:fixed;bottom:10px;right:10px;z-index:999;font-size:clamp(18px,3vw,26px);cursor:pointer;background:rgba(0,0,0,0.5);color:white;padding:6px 10px;border-radius:10px;}
+.screen{position:fixed;width:100%;height:100%;display:flex;justify-content:center;align-items:center;flex-direction:column;}
+#startScreen{background:url('start_bg.png') center/cover no-repeat;}
+#startScreen button{padding:15px 40px;font-size:22px;background:#ffcc00;border:none;border-radius:12px;}
+/* MAP — dynamic levels */
+#mapScreen{display:none;background:url('map.png') center/cover no-repeat;position:fixed;width:100%;height:100%;}
+#mapLevels{position:absolute;inset:0;}
+.map-level{position:absolute;transform:translate(-50%,-50%);text-align:center;color:white;cursor:pointer;transition:opacity 0.3s;}
+.map-level img{width:clamp(100px,16vw,200px);animation:float 2.5s ease-in-out infinite;}
+.map-level.lock img{filter:grayscale(1) brightness(0.4);animation:none;}
+.map-level .lv-label{font-size:clamp(11px,1.6vw,16px);font-weight:bold;margin-top:4px;}
+.map-level .lv-stars{color:gold;font-size:clamp(10px,1.4vw,14px);}
+@keyframes float{0%{transform:translateY(0);}50%{transform:translateY(-12px);}100%{transform:translateY(0);}}
+/* STAGE POPUP */
+#stagePopup{display:none;position:fixed;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:50;justify-content:center;align-items:center;}
+#stageBox{background:linear-gradient(135deg,#1a0533,#0d1b4b);border:2px solid rgba(255,204,0,0.5);border-radius:20px;padding:30px;text-align:center;color:white;width:clamp(300px,80vw,460px);max-height:85vh;overflow-y:auto;}
+#stageBox h2{color:#ffcc00;margin-bottom:20px;font-size:22px;}
+#stageLoadingMsg{color:#ffcc00;font-size:13px;padding:10px 0;}
+.stage-btn{display:block;width:100%;padding:14px;margin:8px 0;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:12px;color:white;font-size:15px;cursor:pointer;text-align:left;transition:all 0.15s;}
+.stage-btn:hover{background:rgba(255,204,0,0.15);border-color:#ffcc00;}
+.stage-btn.done{border-color:lime;background:rgba(0,255,0,0.08);}
+.stage-btn.done::after{content:" ✅";float:right;}
+.stage-btn.locked{opacity:0.4;cursor:not-allowed;}
+#stageClose{margin-top:15px;padding:10px 25px;background:#333;border:none;border-radius:10px;color:white;font-size:15px;cursor:pointer;}
+/* WEAPON */
+#weaponOverlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.88);justify-content:center;align-items:center;flex-direction:column;}
+#weaponOverlay.show{display:flex;}
+#weaponBox{background:linear-gradient(160deg,#1a0040,#002b1a,#1a1a00);border:3px solid #ffcc00;border-radius:24px;padding:36px 40px;text-align:center;width:clamp(280px,80vw,420px);position:relative;animation:weaponBoxPop 0.6s cubic-bezier(0.175,0.885,0.32,1.275);}
+@keyframes weaponBoxPop{0%{transform:scale(0.3) rotate(-8deg);opacity:0;}60%{transform:scale(1.08) rotate(2deg);}100%{transform:scale(1) rotate(0);}}
+#weaponGlow{position:absolute;inset:-2px;border-radius:26px;background:linear-gradient(135deg,#ffcc00,#ff6600,#ffcc00);z-index:-1;opacity:0.5;animation:weaponBorderSpin 2s linear infinite;}
+@keyframes weaponBorderSpin{0%{filter:hue-rotate(0deg) blur(5px);}100%{filter:hue-rotate(360deg) blur(5px);}}
+#weaponUnlockLabel{color:#ffcc00;font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:900;margin-bottom:8px;}
+#weaponTitle{color:white;font-size:clamp(20px,4vw,28px);font-weight:900;margin-bottom:20px;}
+#weaponImgWrap{position:relative;width:clamp(120px,30vw,180px);height:clamp(120px,30vw,180px);margin:0 auto 20px;}
+#weaponImg{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 30px gold);animation:weaponFloat 1.5s ease-in-out infinite;}
+@keyframes weaponFloat{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-14px) rotate(3deg);}}
+#weaponParticles{position:absolute;inset:0;pointer-events:none;}
+.wp{position:absolute;width:6px;height:6px;border-radius:50%;animation:wpFloat 1.2s ease-out infinite;}
+@keyframes wpFloat{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(0);}}
+#weaponDesc{color:rgba(255,255,255,0.7);font-size:14px;margin-bottom:24px;line-height:1.6;white-space:pre-line;}
+#weaponContinueBtn{padding:14px 36px;background:linear-gradient(135deg,#ffcc00,#ff8800);border:none;border-radius:14px;font-size:18px;font-weight:900;cursor:pointer;color:#111;}
+#starsBurst{position:fixed;inset:0;pointer-events:none;z-index:499;display:none;}
+#starsBurst.show{display:block;}
+.star-p{position:absolute;font-size:clamp(16px,3vw,28px);animation:starBurst 1.2s ease-out forwards;pointer-events:none;}
+@keyframes starBurst{0%{opacity:1;transform:scale(0) translateY(0);}30%{opacity:1;transform:scale(1.4) translateY(-20px);}100%{opacity:0;transform:scale(0.5) translateY(-90px);}}
+/* GAME SCREENS */
+#gameScreen{display:none;}
+#scene{position:fixed;width:100%;height:100%;object-fit:cover;z-index:1;}
+#ui{position:fixed;top:0;width:100%;display:flex;justify-content:space-between;align-items:flex-start;padding:12px 16px;z-index:10;pointer-events:none;}
+.hp-panel{background:rgba(0,0,0,0.55);border:2px solid rgba(255,255,255,0.15);border-radius:14px;padding:8px 14px;min-width:clamp(120px,28vw,220px);backdrop-filter:blur(6px);}
+.hp-label{font-size:clamp(10px,1.4vw,13px);color:rgba(255,255,255,0.7);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.hp-name{font-size:clamp(11px,1.6vw,14px);color:white;font-weight:800;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hp-bar{width:100%;height:clamp(8px,1.2vw,12px);background:rgba(255,255,255,0.15);border-radius:20px;overflow:hidden;}
+.hp-fill{height:100%;border-radius:20px;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);}
+#playerHP{background:linear-gradient(90deg,#22c55e,#4ade80);}
+#bossHP{background:linear-gradient(90deg,#ef4444,#f97316);}
+.hp-text{font-size:clamp(10px,1.3vw,12px);color:rgba(255,255,255,0.5);margin-top:3px;text-align:right;}
+#battleStage{position:fixed;bottom:0;left:0;right:0;height:55%;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;padding:0 clamp(10px,4vw,60px) clamp(150px,26vw,240px);pointer-events:none;}
+#playerSprite{width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 8px 20px rgba(0,200,100,0.4));transform-origin:bottom center;position:relative;z-index:3;}
+#bossSprite{width:clamp(300px,50vw,650px);height:clamp(300px,50vw,650px);object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 8px 20px rgba(220,50,50,0.5));transform:scaleX(-1);transform-origin:bottom center;position:relative;z-index:3;}
+@keyframes playerAttack{0%{transform:translateX(0);}30%{transform:translateX(clamp(80px,18vw,200px)) scale(1.15);}55%{transform:translateX(clamp(80px,18vw,200px)) scale(0.95);}100%{transform:translateX(0);}}
+.player-attacking{animation:playerAttack 0.65s cubic-bezier(0.25,0.46,0.45,0.94) forwards;}
+@keyframes bossAttack{0%{transform:scaleX(-1) translateX(0);}30%{transform:scaleX(-1) translateX(clamp(80px,18vw,200px)) scale(1.15);}55%{transform:scaleX(-1) translateX(clamp(80px,18vw,200px)) scale(0.95);}100%{transform:scaleX(-1) translateX(0);}}
+.boss-attacking{animation:bossAttack 0.65s cubic-bezier(0.25,0.46,0.45,0.94) forwards;}
+@keyframes playerHit{0%{filter:drop-shadow(0 8px 20px rgba(0,200,100,0.4)) brightness(3);}20%{transform:translateX(-14px);}40%{transform:translateX(10px);}60%{transform:translateX(-8px);}80%{transform:translateX(6px);}100%{transform:translateX(0);filter:drop-shadow(0 8px 20px rgba(0,200,100,0.4));}}
+.player-hurt{animation:playerHit 0.55s ease forwards;}
+@keyframes bossHit{0%{filter:brightness(3) drop-shadow(0 0 20px lime);}20%{transform:scaleX(-1) translateX(14px);}40%{transform:scaleX(-1) translateX(-10px);}60%{transform:scaleX(-1) translateX(8px);}80%{transform:scaleX(-1) translateX(-5px);}100%{transform:scaleX(-1) translateX(0);filter:drop-shadow(0 8px 20px rgba(220,50,50,0.5));}}
+.boss-hurt{animation:bossHit 0.55s ease forwards;}
+#impactFlash{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;transition:opacity 0.08s;}
+#impactFlash.flash-green{background:rgba(0,255,100,0.18);}
+#impactFlash.flash-red{background:rgba(255,50,0,0.20);}
+#impactIcon{position:fixed;z-index:6;font-size:clamp(36px,7vw,70px);pointer-events:none;opacity:0;transform:scale(0) rotate(-20deg);}
+@keyframes iconPop{0%{opacity:0;transform:scale(0) rotate(-20deg);}35%{opacity:1;transform:scale(1.4) rotate(12deg);}65%{opacity:1;transform:scale(1.1) rotate(-5deg);}100%{opacity:0;transform:scale(0.8) rotate(0deg);}}
+.icon-popping{animation:iconPop 0.7s ease forwards;}
+#speechBubble{position:fixed;top:6vh;left:50%;transform:translateX(-50%);z-index:8;background:white;color:black;padding:10px 18px;border-radius:25px;font-size:clamp(24px,2.5vw,36px);font-weight:bold;}
+#question{position:fixed;top:16vh;width:100%;text-align:center;z-index:8;}
+#question img{width:clamp(140px,25vw,300px);height:auto;animation:glowPulse 1.5s infinite alternate;}
+.glow-lv1{filter:drop-shadow(0 0 15px yellow) drop-shadow(0 0 40px gold);}
+.glow-lv2{filter:drop-shadow(0 0 20px cyan) drop-shadow(0 0 60px cyan);}
+.glow-lv3{filter:drop-shadow(0 0 25px violet) drop-shadow(0 0 70px magenta);}
+.glow-lv4{filter:drop-shadow(0 0 25px #ff4400) drop-shadow(0 0 70px #ff2200);}
+.glow-lv5{filter:drop-shadow(0 0 25px #00ffcc) drop-shadow(0 0 70px #00ccff);}
+@keyframes glowPulse{0%{transform:scale(1);}100%{transform:scale(1.06);}}
+#answers{position:fixed;bottom:5vh;width:100%;display:flex;justify-content:center;gap:clamp(10px,3vw,30px);flex-wrap:wrap;padding:0 10px;z-index:8;}
+.answer-btn{width:clamp(100px,28vw,220px);height:clamp(100px,28vw,220px);border:none;background:transparent;cursor:pointer;transition:transform 0.2s ease,filter 0.2s ease;}
+.answer-btn img{width:100%;height:100%;object-fit:contain;pointer-events:none;}
+.answer-btn:hover{transform:translateY(-12px) scale(1.08);filter:drop-shadow(0 10px 20px rgba(0,0,0,0.5));}
+.answer-btn:active{transform:scale(0.92) translateY(2px);}
+.hide-ui{opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.answer-btn.correct{border:6px solid lime;border-radius:20px;box-shadow:0 0 25px lime;animation:correctPop 0.5s ease;}
+@keyframes correctPop{0%{transform:scale(1);}40%{transform:scale(1.25);}70%{transform:scale(0.95);}100%{transform:scale(1.1);}}
+.answer-btn.wrong{border:6px solid red;border-radius:20px;box-shadow:0 0 25px red;animation:shakeWrong 0.4s;}
+@keyframes shakeWrong{0%{transform:translateX(0);}20%{transform:translateX(-10px);}40%{transform:translateX(10px);}60%{transform:translateX(-8px);}80%{transform:translateX(8px);}100%{transform:translateX(0);}}
+#matchScreen{display:none;position:fixed;width:100%;height:100%;z-index:10;background-size:cover;background-position:center;}
+#matchOverlay{position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#matchTitle{color:#ffcc00;font-size:clamp(18px,3vw,26px);font-weight:bold;margin-bottom:clamp(10px,2vh,20px);}
+#matchBoard{display:flex;gap:clamp(10px,3vw,40px);justify-content:center;align-items:flex-start;}
+.match-col{display:flex;flex-direction:column;gap:12px;}
+.match-item{width:clamp(60px,11vw,120px);height:clamp(60px,11vw,120px);background:rgba(255,255,255,0.1);border:3px solid rgba(255,255,255,0.3);border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:clamp(11px,1.8vw,18px);font-weight:bold;color:white;transition:all 0.2s;user-select:none;}
+.match-item img{width:80%;height:80%;object-fit:contain;pointer-events:none;}
+.match-item:hover{transform:scale(1.06);}
+.match-item.selected{border-color:#ffcc00;box-shadow:0 0 20px #ffcc00;background:rgba(255,204,0,0.2);}
+.match-item.matched{border-color:lime;background:rgba(0,255,0,0.15);opacity:0.6;pointer-events:none;}
+.match-item.wrong-flash{border-color:red;background:rgba(255,0,0,0.2);animation:shakeWrong 0.4s;}
+#matchScore{color:white;font-size:16px;margin-top:15px;text-align:center;}
+#memoryScreen{display:none;position:fixed;width:100%;height:100%;z-index:10;background-size:cover;background-position:center;}
+#memoryOverlay{position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#memoryTitle{color:#00e5ff;font-size:clamp(18px,3vw,26px);font-weight:bold;margin-bottom:clamp(10px,2vh,18px);}
+#memoryGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,1.5vw,16px);width:clamp(280px,65vw,600px);}
+.mem-card{aspect-ratio:1;background:#1a1a3a;border:3px solid rgba(255,255,255,0.2);border-radius:12px;cursor:pointer;user-select:none;position:relative;overflow:hidden;}
+.mem-card .card-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform 0.4s;}
+.mem-card .card-front,.mem-card .card-back{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;border-radius:10px;}
+.mem-card .card-front{background:#1a1a3a;font-size:30px;}
+.mem-card .card-back{background:rgba(255,255,255,0.08);transform:rotateY(180deg);}
+.mem-card .card-back img{width:70%;height:70%;object-fit:contain;}
+.mem-card .card-back span{font-size:clamp(14px,2.2vw,22px);font-weight:bold;color:white;}
+.mem-card.flipped .card-inner{transform:rotateY(180deg);}
+.mem-card.matched{border-color:lime;background:rgba(0,255,0,0.1);}
+#resultScreen{display:none;background:black;color:white;text-align:center;}
+#repeatBtn{position:fixed;bottom:10px;right:150px;z-index:999;font-size:clamp(18px,3vw,26px);cursor:pointer;background:rgba(0,0,0,0.5);color:white;padding:6px 10px;border-radius:10px;}
+#homeBtn{position:fixed;bottom:10px;right:80px;z-index:999;font-size:clamp(18px,3vw,26px);cursor:pointer;background:rgba(0,0,0,0.5);color:white;padding:6px 10px;border-radius:10px;}
+#playerTag{position:fixed;top:0;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#ffcc00;padding:4px 16px;border-radius:0 0 12px 12px;font-size:13px;z-index:999;}
+#adminBtn{position:fixed;bottom:10px;left:10px;z-index:999;font-size:13px;cursor:pointer;background:rgba(0,0,0,0.5);color:#aaa;padding:6px 10px;border-radius:10px;display:none;}
+#vocabBtn{position:fixed;bottom:10px;left:90px;z-index:999;font-size:13px;cursor:pointer;background:rgba(255,204,0,0.15);color:#ffcc00;padding:6px 12px;border-radius:10px;display:none;border:1px solid rgba(255,204,0,0.3);}
+#leaderboardBtn{position:fixed;bottom:10px;left:185px;z-index:999;font-size:14px;cursor:pointer;background:rgba(0,0,0,0.5);color:#ffcc00;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,204,0,0.4);display:none;font-weight:bold;}
+/* LEADERBOARD */
+#leaderboardScreen{display:none;position:fixed;width:100%;height:100%;background:linear-gradient(160deg,#06001a 0%,#030d2a 45%,#001508 100%);z-index:300;overflow-y:auto;}
+#lbInner{position:relative;z-index:1;}
+#lbHeader{position:relative;padding:30px 20px 20px;text-align:center;border-bottom:1px solid rgba(255,204,0,0.15);}
+#lbTitle{font-size:clamp(22px,4vw,36px);font-weight:900;color:#ffcc00;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;}
+#lbSubtitle{color:rgba(255,255,255,0.3);font-size:11px;letter-spacing:4px;text-transform:uppercase;}
+#lbCloseBtn{position:absolute;top:20px;right:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:rgba(255,255,255,0.7);padding:8px 16px;font-size:13px;cursor:pointer;}
+#lbRefreshBtn{position:absolute;top:20px;left:16px;background:rgba(255,204,0,0.08);border:1px solid rgba(255,204,0,0.25);border-radius:10px;color:#ffcc00;padding:8px 14px;font-size:13px;cursor:pointer;}
+#lbPodium{display:flex;justify-content:center;align-items:flex-end;gap:clamp(6px,2vw,24px);padding:28px 20px 8px;}
+.podium-card{display:flex;flex-direction:column;align-items:center;}
+.podium-rank-badge{font-size:clamp(22px,4vw,36px);margin-bottom:8px;}
+.podium-avatar{width:clamp(48px,9vw,72px);height:clamp(48px,9vw,72px);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-bottom:8px;overflow:hidden;}
+.podium-avatar img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;}
+.rank-1 .podium-avatar{background:linear-gradient(135deg,#ffd700,#ff8c00);box-shadow:0 0 25px rgba(255,215,0,0.55);}
+.rank-2 .podium-avatar{background:linear-gradient(135deg,#d4d4d4,#6b6b6b);}
+.rank-3 .podium-avatar{background:linear-gradient(135deg,#d4855a,#7a3a12);}
+.podium-name{color:white;font-size:clamp(11px,1.8vw,14px);font-weight:700;text-align:center;max-width:clamp(68px,12vw,105px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.podium-cls{color:rgba(255,255,255,0.38);font-size:11px;margin-bottom:4px;}
+.podium-score{font-size:clamp(11px,1.7vw,15px);font-weight:800;margin-bottom:2px;}
+.rank-1 .podium-score{color:#ffd700;}.rank-2 .podium-score{color:#c8c8c8;}.rank-3 .podium-score{color:#d4855a;}
+.podium-stars{font-size:11px;margin-bottom:6px;}
+.podium-block{border-radius:10px 10px 0 0;width:clamp(68px,12vw,105px);display:flex;align-items:center;justify-content:center;font-size:clamp(16px,3vw,24px);font-weight:900;margin-top:8px;}
+.rank-1 .podium-block{height:clamp(50px,10vh,76px);background:linear-gradient(180deg,rgba(255,215,0,0.25),rgba(255,215,0,0.06));border:1px solid rgba(255,215,0,0.35);color:rgba(255,215,0,0.35);}
+.rank-2 .podium-block{height:clamp(36px,7vh,54px);background:linear-gradient(180deg,rgba(192,192,192,0.2),rgba(192,192,192,0.05));border:1px solid rgba(192,192,192,0.25);color:rgba(192,192,192,0.3);}
+.rank-3 .podium-block{height:clamp(26px,5vh,40px);background:linear-gradient(180deg,rgba(205,127,50,0.2),rgba(205,127,50,0.05));border:1px solid rgba(205,127,50,0.25);color:rgba(205,127,50,0.3);}
+#lbList{width:clamp(290px,92vw,680px);margin:16px auto 50px;}
+.lb-divider{color:rgba(255,255,255,0.22);font-size:10px;letter-spacing:3px;text-transform:uppercase;text-align:center;margin:16px 0 10px;display:flex;align-items:center;gap:10px;}
+.lb-divider::before,.lb-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.08);}
+.lb-row{display:grid;grid-template-columns:42px 44px 1fr 130px 80px 85px;align-items:center;gap:8px;padding:11px 14px;border-radius:14px;margin-bottom:7px;border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.03);}
+.lb-row.mine{background:rgba(255,204,0,0.08);border-color:rgba(255,204,0,0.3);}
+.lb-rank{font-size:clamp(13px,2vw,17px);font-weight:900;text-align:center;color:rgba(255,255,255,0.35);}
+.lb-rank.gold{color:#ffd700;}.lb-rank.silver{color:#c8c8c8;}.lb-rank.bronze{color:#d4855a;}
+.lb-avatar{width:36px;height:36px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.lb-avatar img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;}
+.lb-info .lb-name{font-size:clamp(12px,1.8vw,15px);font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-info .lb-cls{font-size:10px;color:rgba(255,255,255,0.35);}
+.lb-stars{font-size:clamp(9px,1.4vw,12px);text-align:center;line-height:1.4;}
+.lb-stars small{display:block;font-size:9px;color:rgba(255,255,255,0.28);}
+.lb-correct{font-size:clamp(11px,1.5vw,14px);font-weight:700;color:#4ade80;text-align:center;}
+.lb-correct small{display:block;font-size:9px;color:rgba(255,255,255,0.28);}
+.lb-score{font-size:clamp(12px,1.8vw,16px);font-weight:900;color:#ffcc00;text-align:right;}
+.lb-score small{display:block;font-size:9px;color:rgba(255,255,255,0.28);text-align:right;}
+.lb-empty{text-align:center;color:rgba(255,255,255,0.28);padding:50px 20px;font-size:15px;line-height:2;}
+#lbFormula{text-align:center;color:rgba(255,255,255,0.25);font-size:11px;padding:0 20px 14px;}
+#lbLoading{text-align:center;color:#ffcc00;padding:50px;font-size:15px;}
+#battleOverlay{position:fixed;inset:0;z-index:9;display:none;justify-content:center;align-items:center;pointer-events:none;}
+#battleOverlay.show{display:flex;}
+#battleOverlayText{font-size:clamp(48px,10vw,100px);font-weight:900;text-shadow:0 0 40px currentColor;animation:overlayPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);}
+@keyframes overlayPop{0%{transform:scale(0) rotate(-10deg);opacity:0;}60%{transform:scale(1.2) rotate(3deg);}100%{transform:scale(1) rotate(0);}}
+@media (max-width:768px){.lb-row{grid-template-columns:32px 36px 1fr 80px 60px 70px;gap:5px;padding:9px 10px;}}
+</style>
+</head>
+<body>
+<div id="playerTag">👤 —</div>
+<div id="homeBtn" onclick="goHome()">🏠</div>
+<div id="soundBtn" onclick="toggleSound()">🔊</div>
+<div id="repeatBtn" onclick="repeatSpeak()">🔁</div>
+<div id="adminBtn" onclick="openAdmin()">🛠 ข้อมูล</div>
+<div id="vocabBtn" onclick="openVocabManager()">⚙️ จัดการ</div>
+<div id="leaderboardBtn" onclick="openLeaderboard()">🏆 อันดับ</div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div id="loginBox">
+    <h2>⚔️ Teacher Hero</h2>
+    <p>กรุณาเข้าสู่ระบบด้วยชื่อของคุณ</p>
+    <input type="text" id="loginName" placeholder="ชื่อ นามสกุล" maxlength="60" autocomplete="off">
+    <input type="text" id="loginClass" placeholder="ใส่ชั้น เช่น 1/1" maxlength="4" autocomplete="off">
+    <button id="loginBtn" onclick="doLogin()">เริ่มเกม</button>
+    <div id="loginMsg"></div>
+    <div id="loginLoading">⏳ กำลังตรวจสอบ...</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminPanel">
+  <h1>🛠 แผงควบคุมครู — ข้อมูลผู้เล่น</h1>
+  <button class="admin-refresh-btn" onclick="loadAdminData()">🔄 รีเฟรช</button>
+  <table id="adminTable">
+    <thead><tr><th>#</th><th>ชื่อ</th><th>ห้อง</th><th>⭐ ดาว</th><th>✅ถูก</th><th>❌ผิด</th><th>🕐เล่นล่าสุด</th></tr></thead>
+    <tbody id="adminBody"></tbody>
+  </table>
+  <button class="admin-close-btn" onclick="closeAdmin()">✖ ปิด</button>
+</div>
+
+<!-- VOCAB + STAGE + LEVEL MANAGER -->
+<div id="vocabManager">
+  <div id="vmInner">
+    <h1>⚙️ จัดการเกม</h1>
+    <div class="vm-sub">เพิ่ม/ลบคำศัพท์ · จัดการด่าน · เพิ่ม Level ได้ไม่จำกัด — บันทึกลง Google Sheets ทันที</div>
+    <div class="vm-tabs">
+      <button class="vm-tab active" onclick="vmTab('vocab')">📚 คำศัพท์</button>
+      <button class="vm-tab" onclick="vmTab('addvocab')">➕ เพิ่มคำ</button>
+      <button class="vm-tab" onclick="vmTab('levels')">🗺 Levels</button>
+      <button class="vm-tab" onclick="vmTab('addlevel')">➕ เพิ่ม Level</button>
+      <button class="vm-tab" onclick="vmTab('stages')">🗂 ด่านทั้งหมด</button>
+      <button class="vm-tab" onclick="vmTab('addstage')">➕ เพิ่มด่าน</button>
+    </div>
+
+    <!-- VOCAB LIST -->
+    <div id="vmTab-vocab" class="vm-section active">
+      <div id="vmSummary" class="vm-summary"></div>
+      <div class="vm-filter">
+        <label>แสดง Level:</label>
+        <select id="vmFilter" onchange="vmRenderVocabList()">
+          <option value="all">ทุก Level</option>
+        </select>
+        <button class="vm-btn" style="margin-left:auto" onclick="loadVocab()">🔄 โหลดใหม่</button>
+      </div>
+      <div id="vmVocabLoading" class="vm-loading" style="display:none">⏳ กำลังโหลด...</div>
+      <div id="vmWordGrid" class="vm-word-grid"></div>
+    </div>
+
+    <!-- ADD VOCAB -->
+    <div id="vmTab-addvocab" class="vm-section">
+      <div class="vm-info">
+        <strong>วิธีเพิ่มคำศัพท์:</strong><br>
+        1. ตั้งชื่อคำศัพท์ภาษาอังกฤษ เช่น <code>apple</code><br>
+        2. วางไฟล์ <code>q_apple.png</code> และ <code>apple.png</code> ในโฟลเดอร์เกม<br>
+        3. เลือก Level ที่ต้องการ แล้วกด "บันทึก"
+      </div>
+      <div class="vm-card">
+        <h3>ข้อมูลคำศัพท์ใหม่</h3>
+        <div class="vm-form-row">
+          <div class="vm-form-group">
+            <label>ชื่อคำศัพท์ (ภาษาอังกฤษ)</label>
+            <input type="text" id="vmNewWord" placeholder="เช่น apple, cat, house" oninput="vmUpdatePreview()">
+          </div>
+          <div class="vm-form-group">
+            <label>เพิ่มใน Level (เลือกได้หลายอัน)</label>
+            <div id="vmLvCheckboxes" class="vm-cb-row"></div>
+            <div style="font-size:11px;color:#555;margin-top:6px;">Level สูงสุดจะรวมคำศัพท์ทั้งหมดอัตโนมัติ</div>
+          </div>
+        </div>
+        <div class="vm-preview-wrap">
+          <div>
+            <div style="font-size:12px;color:#666;margin-bottom:6px;">ตัวอย่างรูปคำถาม</div>
+            <div class="vm-preview-box" id="vmPreviewBox"><span style="font-size:11px">ยังไม่มีรูป</span></div>
+          </div>
+          <div class="vm-upload-zone" onclick="document.getElementById('vmFileInput').click()">
+            <input type="file" id="vmFileInput" accept="image/*" onchange="vmHandleUpload(this)">
+            <div class="uz-icon">📁</div>
+            <div class="uz-text">คลิกดูตัวอย่างรูปจากเครื่อง</div>
+            <div class="uz-note">ไม่ได้อัปโหลดจริง — แค่ preview</div>
+            <div class="uz-fname" id="vmUploadedName"></div>
+          </div>
+        </div>
+        <div class="vm-btn-row">
+          <button class="vm-btn" onclick="vmClearVocabForm()">ล้างฟอร์ม</button>
+          <button class="vm-btn primary" onclick="vmAddWord()">➕ บันทึกลง Sheets</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEVEL LIST -->
+    <div id="vmTab-levels" class="vm-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="color:#888;font-size:13px;">Level ทั้งหมดในแผนที่</div>
+        <button class="vm-btn" onclick="loadLevels()">🔄 โหลดใหม่</button>
+      </div>
+      <div id="vmLevelLoading" class="vm-loading" style="display:none">⏳ กำลังโหลด...</div>
+      <div id="vmLevelList" class="level-list"></div>
+    </div>
+
+    <!-- ADD LEVEL -->
+    <div id="vmTab-addlevel" class="vm-section">
+      <div class="vm-info">
+        <strong>การเพิ่ม Level ใหม่:</strong><br>
+        • กำหนดหมายเลข Level เช่น <code>4</code>, <code>5</code><br>
+        • กำหนดชื่อ Boss และจำนวน HP Boss<br>
+        • กำหนดตำแหน่ง icon บน Map (% จากซ้าย/บน)<br>
+        • ไฟล์รูปที่ต้องเตรียม: <code>monster4.png</code>, <code>boss4.png</code>, <code>classroom4.png</code>, <code>player4.png</code><br>
+        • ถ้าไม่มีไฟล์จะใช้ fallback ไฟล์ของ Level ก่อนหน้าแทน
+      </div>
+      <div class="vm-card">
+        <h3>ข้อมูล Level ใหม่</h3>
+        <div class="vm-form-row">
+          <div class="vm-form-group">
+            <label>หมายเลข Level</label>
+            <input type="number" id="lvNum" min="1" max="99" placeholder="เช่น 4" value="4">
+          </div>
+          <div class="vm-form-group">
+            <label>ชื่อ Boss</label>
+            <input type="text" id="lvBossName" placeholder="เช่น Ultimate Boss">
+          </div>
+        </div>
+        <div class="vm-form-row">
+          <div class="vm-form-group">
+            <label>HP Boss</label>
+            <input type="number" id="lvBossHP" min="1" max="99" placeholder="เช่น 10" value="10">
+          </div>
+          <div class="vm-form-group">
+            <label>ตำแหน่ง Map (left% , top%)</label>
+            <input type="text" id="lvMapPos" placeholder="เช่น 50,50" value="50,30">
+          </div>
+        </div>
+        <div class="vm-btn-row">
+          <button class="vm-btn" onclick="vmClearLevelForm()">ล้างฟอร์ม</button>
+          <button class="vm-btn primary" onclick="vmAddLevel()">➕ บันทึก Level ลง Sheets</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE LIST -->
+    <div id="vmTab-stages" class="vm-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="color:#888;font-size:13px;">ด่านทั้งหมด — เรียงตาม Level และลำดับ</div>
+        <button class="vm-btn" onclick="loadStages()">🔄 โหลดใหม่</button>
+      </div>
+      <div id="vmStageLoading" class="vm-loading" style="display:none">⏳ กำลังโหลด...</div>
+      <div id="vmStageList" class="stage-list"></div>
+    </div>
+
+    <!-- ADD STAGE -->
+    <div id="vmTab-addstage" class="vm-section">
+      <div class="vm-info">
+        <strong>การเพิ่มด่านใหม่:</strong><br>
+        • เลือก Level และประเภทเกม<br>
+        • <strong>ลำดับ</strong> กำหนดว่าต้องทำด่านไหนก่อน — ตัวเลขน้อย = ทำก่อน<br>
+        • ผู้เล่นต้องผ่านด่านลำดับก่อนหน้าจึงจะปลดล็อกได้
+      </div>
+      <div class="vm-card">
+        <h3>ข้อมูลด่านใหม่</h3>
+        <div class="vm-form-row">
+          <div class="vm-form-group">
+            <label>ชื่อด่าน</label>
+            <input type="text" id="stgLabel" placeholder="เช่น ⚔️ ด่านพิเศษ — Quiz สัตว์">
+          </div>
+          <div class="vm-form-group">
+            <label>Level</label>
+            <select id="stgLevel"></select>
+          </div>
+        </div>
+        <div class="vm-form-row">
+          <div class="vm-form-group">
+            <label>ประเภทเกม</label>
+            <select id="stgType">
+              <option value="battle">⚔️ Quiz — ตอบคำถาม</option>
+              <option value="match">🧩 Match — จับคู่ภาพ-คำ</option>
+              <option value="memory">🃏 Memory — จำการ์ด</option>
+            </select>
+          </div>
+          <div class="vm-form-group">
+            <label>ลำดับ (Order)</label>
+            <input type="number" id="stgOrder" placeholder="เช่น 4" value="4" min="1">
+          </div>
+        </div>
+        <div class="vm-btn-row">
+          <button class="vm-btn" onclick="vmClearStageForm()">ล้างฟอร์ม</button>
+          <button class="vm-btn primary" onclick="vmAddStage()">➕ บันทึกด่านลง Sheets</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="vm-close-btn" onclick="closeVocabManager()">✖ ปิดหน้าต่าง</button>
+  </div>
+</div>
+<div id="vmToast"></div>
+
+<!-- LEADERBOARD -->
+<div id="leaderboardScreen">
+  <div id="lbInner">
+    <div id="lbHeader">
+      <button id="lbRefreshBtn" onclick="loadLeaderboard()">🔄 รีเฟรช</button>
+      <div id="lbTitle">🏆 อันดับผู้เล่น</div>
+      <div id="lbSubtitle">Classroom Battle — Hall of Fame</div>
+      <button id="lbCloseBtn" onclick="closeLeaderboard()">✖ ปิด</button>
+    </div>
+    <div id="lbFormula">คะแนน = (⭐รวม × 100) + (✅ถูก × 10) − (❌ผิด × 3)</div>
+    <div id="lbPodium"></div>
+    <div id="lbList"><div id="lbLoading">⏳ กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<!-- GAME SCREENS -->
+<div id="startScreen" class="screen" style="display:none;">
+  <h1 style="color:white">⚔️ Teacher Hero</h1>
+  <button onclick="goMap()">START</button>
+  <button onclick="showInfo()" style="margin-top:10px;">INFO</button>
+</div>
+<div id="infoScreen" class="screen" style="display:none;background:rgba(0,0,0,0.9);color:white;text-align:center;">
+  <h2>📘 ข้อมูลผู้จัดทำ</h2>
+  <p style="margin-top:15px;font-size:20px;">ผู้จัดทำ<br>คุณครู สิรรินทร์ ยอดใส<br>โรงเรียนอนุบาลเพชรบุรี</p>
+  <button onclick="closeInfo()" style="margin-top:20px;padding:10px 25px;font-size:18px;border:none;border-radius:10px;background:#ffcc00;">CLOSE</button>
+</div>
+<div id="mapScreen">
+  <div id="mapLevels"></div>
+</div>
+<div id="stagePopup">
+  <div id="stageBox">
+    <h2 id="stageTitle">⚔️ LEVEL 1 — เลือกด่าน</h2>
+    <div id="stageLoadingMsg" style="display:none;color:#ffcc00;font-size:13px;padding:10px 0;">⏳ กำลังโหลดด่าน...</div>
+    <div id="stageBtnContainer"></div>
+    <br><button id="stageClose" onclick="closeStagePopup()">✖ ยกเลิก</button>
+  </div>
+</div>
+<div id="gameScreen">
+  <img id="scene">
+  <div id="ui">
+    <div class="hp-panel">
+      <div class="hp-label">PLAYER</div>
+      <div class="hp-name" id="playerHPName">Hero</div>
+      <div class="hp-bar"><div id="playerHP" class="hp-fill"></div></div>
+      <div class="hp-text" id="playerHPText">5 / 5</div>
+    </div>
+    <div class="hp-panel" style="text-align:right;">
+      <div class="hp-label" style="text-align:right;">BOSS</div>
+      <div class="hp-name" id="bossHPName">Monster</div>
+      <div class="hp-bar"><div id="bossHP" class="hp-fill"></div></div>
+      <div class="hp-text" id="bossHPText">5 / 5</div>
+    </div>
+  </div>
+  <div id="battleStage">
+    <img id="playerSprite" src="player.png" alt="player">
+    <img id="bossSprite" src="boss1.png" alt="boss">
+  </div>
+  <div id="impactFlash"></div>
+  <div id="impactIcon"></div>
+  <div id="timerBar"><div id="timerFill"></div></div>
+  <div id="speechBubble">What is this?</div>
+  <div id="question"></div>
+  <div id="answers"></div>
+  <div id="battleOverlay"><div id="battleOverlayText"></div></div>
+</div>
+<div id="matchScreen">
+  <div id="matchOverlay">
+    <div id="matchTitle">🧩 จับคู่ภาพกับคำศัพท์</div>
+    <div id="matchBoard"></div>
+    <div id="matchScore">คู่ที่เจอ: 0 / 5</div>
+  </div>
+</div>
+<div id="memoryScreen">
+  <div id="memoryOverlay">
+    <div id="memoryTitle">🃏 จำการ์ด — เปิดหาคู่</div>
+    <div id="memoryGrid"></div>
+    <div id="memoryScore">คู่ที่เจอ: 0 / 6</div>
+  </div>
+</div>
+<div id="resultScreen" class="screen">
+  <h1 id="resultTitle">RESULT</h1>
+  <h2 id="resultStar" style="font-size:40px;margin:10px;"></h2>
+  <p>✅ Correct: <span id="correctCount">0</span></p>
+  <p>❌ Wrong: <span id="wrongCount">0</span></p>
+  <button onclick="backMap()" style="margin-top:20px;padding:12px 30px;font-size:18px;border:none;border-radius:10px;background:#ffcc00;">BACK TO MAP</button>
+</div>
+<div id="weaponOverlay">
+  <div id="starsBurst"></div>
+  <div id="weaponBox">
+    <div id="weaponGlow"></div>
+    <div id="weaponUnlockLabel">🗡️ อาวุธใหม่ปลดล็อก!</div>
+    <div id="weaponTitle">ดาบแห่งความรู้</div>
+    <div id="weaponImgWrap">
+      <img id="weaponImg" src="" alt="weapon">
+      <div id="weaponParticles"></div>
+    </div>
+    <div id="weaponDesc">คุณได้รับอาวุธใหม่!</div>
+    <button id="weaponContinueBtn" onclick="closeWeaponOverlay()">✨ รับอาวุธ!</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════
+const SHEET_URL  = "https://script.google.com/macros/s/AKfycbz4r-JMrA9hWJvYAgM7TPQIVki9V56q9BXrVKRmTa9jVDCoaDkC8tmuxuInCZj42JI_mA/exec";
+const ADMIN_NAME = "admin ked";
+const ADMIN_CLASS= "9/9";
+
+// Weapon config — fallback ถ้าไม่มีไฟล์ weapon สำหรับ level นั้น ใช้ level 3
+function getWeapon(level, type){
+  const lv = Math.min(level, 3);
+  const cfg = {
+    1:{battle:{file:`weapon_1_battle.png`,name:"ดาบไม้บรรทัด",     desc:"อาวุธแรกของนักรบ!"},
+       match: {file:`weapon_1_match.png`, name:"โล่สมุดงาน",       desc:"จับคู่สำเร็จ!"},
+       memory:{file:`weapon_1_memory.png`,name:"คฑาความจำ",         desc:"จำทุกการ์ดได้!"}},
+    2:{battle:{file:`weapon_2_battle.png`,name:"กระบี่ดินสอสี",    desc:"ผ่านด่านยากขึ้น!"},
+       match: {file:`weapon_2_match.png`, name:"ธนูปากกา",         desc:"ยิงตรงทุกคู่!"},
+       memory:{file:`weapon_2_memory.png`,name:"หอกยางลบ",          desc:"หอกแห่งความแม่นยำ!"}},
+    3:{battle:{file:`weapon_3_battle.png`,name:"ดาบมังกรแห่งปัญญา",desc:"นักรบระดับสูงสุด!"},
+       match: {file:`weapon_3_match.png`, name:"ขวานคู่อัจฉริยะ", desc:"จับคู่ชั้นสูงสำเร็จ!"},
+       memory:{file:`weapon_3_memory.png`,name:"ไม้เท้าจักรวาล",   desc:"จำครบทุกการ์ดสุดยาก!"}},
+  };
+  // Level 4+ ใช้ไฟล์ weapon_4_battle.png ถ้ามี ไม่งั้น fallback ไป level 3
+  if(level >= 4){
+    return {file:`weapon_${level}_${type}.png`, name:`อาวุธ Level ${level}`, desc:`ผ่าน Level ${level} สำเร็จ!`};
+  }
+  return cfg[lv]?.[type] || cfg[3][type];
+}
+
+// ── SPRITE HELPERS — fallback ──
+function getPlayerSprite(lv){ return `player${lv>1?lv:""}.png`; }
+function getBossSprite(lv){ return `boss${lv}.png`; }
+function getClassroomBg(lv){ return `classroom${lv}.png`; }
+function getMonsterSprite(lv){ return `monster${lv}.png`; }
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let vocabData   = [];   // [{word, levels:[1,2,...]}]  — รองรับ multi-level
+let stagesData  = [];   // [{id,level,type,label,order}]
+let levelsData  = [];   // [{num, bossName, bossHP, mapLeft, mapTop}]
+let vocabLoaded = false, stagesLoaded = false, levelsLoaded = false;
+
+// computed vocab per level
+function getVocabForLevel(lv){
+  return vocabData
+    .filter(w => (w.levels || []).includes(lv))
+    .map(w => w.word);
+}
+function getAllWords(){ return [...new Set(vocabData.map(w=>w.word))]; }
+function getLevelConfig(lv){ return levelsData.find(l=>l.num===lv)||{num:lv,bossName:`Boss Lv.${lv}`,bossHP:5,mapLeft:50,mapTop:50}; }
+function getMaxUnlockedLevel(){ return levelsData.length? Math.max(...levelsData.map(l=>l.num)) : 3; }
+
+let currentPlayer=null,currentLevel=1,currentStageType="battle",currentStageId=null,index=0;
+let playerHPMax=5,bossHPMax=5,playerHPValue=5,bossHPValue=5;
+let unlocked={};
+let starsData={},globalUnlocked=1;
+let isPlaying=false,correctScore=0,wrongScore=0,isMuted=false;
+let timer,timeLeft=30,miniWrongCount=0;
+let weaponContinueCallback=null;
+let matchSelected=null,matchPairs=0,matchWords=[];
+let memFlipped=[],memMatched=0,memLocked=false,memWords=[];
+
+function calcScore(stars,correct,wrong){
+  const s=Object.values(stars||{}).reduce((a,b)=>a+(b||0),0);
+  return s*100+(correct||0)*10-(wrong||0)*3;
+}
+function miniStars(){return miniWrongCount===0?3:miniWrongCount<=2?2:1;}
+function getPlayerLevel(r){
+  // หา level สูงสุดที่มีดาว
+  let maxLv=1;
+  Object.entries(r.starsObj||{}).forEach(([lv,s])=>{if(s>0)maxLv=Math.max(maxLv,Number(lv));});
+  return maxLv;
+}
+
+const bgmMenu=new Audio("menu.mp3");bgmMenu.loop=true;
+const sfx={correct:new Audio("correct.mp3"),wrong:new Audio("wrong.mp3"),warning:new Audio("warning.mp3"),win:new Audio("win.mp3"),lose:new Audio("lose.mp3")};
+function playMusic(){if(!isMuted){bgmMenu.currentTime=0;bgmMenu.play();}}
+function stopMusic(){bgmMenu.pause();}
+function toggleSound(){isMuted=!isMuted;soundBtn.innerText=isMuted?"🔇":"🔊";if(!isMuted&&mapScreen.style.display==="block")playMusic();else stopMusic();}
+
+async function apiGet(params){
+  try{
+    const url=SHEET_URL+"?"+new URLSearchParams(params);
+    const res=await fetch(url);
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    return res.json();
+  }catch(e){
+    console.error("API error:",e);
+    return {status:"error",msg:String(e)};
+  }
+}
+
+// ══════════════════════════════════════════════
+//  LOAD DATA
+// ══════════════════════════════════════════════
+async function loadVocabSilent(){
+  try{
+    const data=await apiGet({action:"getVocab"});
+    if(data.status==="ok"){ vocabData=normalizeVocab(data.words||[]); vocabLoaded=true; }
+  }catch(e){ setDefaultVocab(); }
+}
+async function loadStagesSilent(){
+  try{
+    const data=await apiGet({action:"getStages"});
+    if(data.status==="ok"){ stagesData=data.stages||[]; stagesLoaded=true; }
+  }catch(e){ setDefaultStages(); }
+}
+async function loadLevelsSilent(){
+  try{
+    const data=await apiGet({action:"getLevels"});
+    if(data.status==="ok"){ levelsData=data.levels||[]; levelsLoaded=true; }
+  }catch(e){ setDefaultLevels(); }
+}
+
+// normalize vocab เก่า {word,lv1,lv2} → {word, levels:[1,2]}
+function normalizeVocab(words){
+  return words.map(w=>{
+    if(w.levels) return w;
+    const lvs=[];
+    if(w.lv1)lvs.push(1);
+    if(w.lv2)lvs.push(2);
+    // ถ้าไม่มีระบุ default ไป level 1
+    if(!lvs.length)lvs.push(1);
+    return {word:w.word,levels:lvs};
+  });
+}
+function setDefaultVocab(){
+  vocabData=[
+    {word:"book.png",levels:[1]},{word:"pen.png",levels:[1]},{word:"pencil.png",levels:[1]},
+    {word:"eraser.png",levels:[1]},{word:"ruler.png",levels:[1]},{word:"desk.png",levels:[2]},
+    {word:"chair.png",levels:[2]},{word:"bag.png",levels:[2]},{word:"board.png",levels:[2]},{word:"crayon.png",levels:[2]}
+  ];
+}
+function setDefaultStages(){
+  stagesData=[
+    {id:"stage_default_1",level:1,type:"battle",label:"⚔️ ด่าน 1 — ตอบคำถาม (Quiz)",order:1},
+    {id:"stage_default_2",level:1,type:"match", label:"🧩 ด่าน 2 — จับคู่ภาพ-คำ (Match)",order:2},
+    {id:"stage_default_3",level:1,type:"memory",label:"🃏 ด่าน 3 — จำการ์ด (Memory)",order:3},
+  ];
+}
+function setDefaultLevels(){
+  levelsData=[
+    {num:1,bossName:"Monster Lv.1",bossHP:5,mapLeft:20,mapTop:75},
+    {num:2,bossName:"Monster Lv.2",bossHP:5,mapLeft:50,mapTop:50},
+    {num:3,bossName:"Dark Boss",   bossHP:10,mapLeft:78,mapTop:20},
+  ];
+}
+
+async function loadVocab(){
+  document.getElementById("vmVocabLoading").style.display="block";
+  document.getElementById("vmWordGrid").innerHTML="";
+  try{
+    const data=await apiGet({action:"getVocab"});
+    if(data.status==="ok"){vocabData=normalizeVocab(data.words||[]);vocabLoaded=true;}
+    else vmToast("❌ โหลดคำศัพท์ไม่ได้");
+  }catch(e){vmToast("❌ เชื่อมต่อ Sheets ไม่ได้");}
+  document.getElementById("vmVocabLoading").style.display="none";
+  vmBuildFilterOptions();vmBuildLvCheckboxes();vmRenderVocabList();
+}
+async function loadStages(){
+  document.getElementById("vmStageLoading").style.display="block";
+  document.getElementById("vmStageList").innerHTML="";
+  try{
+    const data=await apiGet({action:"getStages"});
+    if(data.status==="ok"){stagesData=data.stages||[];stagesLoaded=true;}
+    else vmToast("❌ โหลดด่านไม่ได้");
+  }catch(e){vmToast("❌ เชื่อมต่อ Sheets ไม่ได้");}
+  document.getElementById("vmStageLoading").style.display="none";
+  vmRenderStageList();
+}
+async function loadLevels(){
+  document.getElementById("vmLevelLoading").style.display="block";
+  document.getElementById("vmLevelList").innerHTML="";
+  try{
+    const data=await apiGet({action:"getLevels"});
+    if(data.status==="ok"){levelsData=data.levels||[];levelsLoaded=true;}
+    else vmToast("❌ โหลด Level ไม่ได้");
+  }catch(e){vmToast("❌ เชื่อมต่อ Sheets ไม่ได้");}
+  document.getElementById("vmLevelLoading").style.display="none";
+  vmRenderLevelList();vmBuildLvCheckboxes();vmBuildStgLevelOptions();
+}
+
+// ══════════════════════════════════════════════
+//  MAP — Dynamic (ไม่จำกัด Level)
+// ══════════════════════════════════════════════
+function buildMap(){
+  const container=document.getElementById("mapLevels");
+  container.innerHTML="";
+  if(!levelsData.length)return;
+  levelsData.sort((a,b)=>a.num-b.num);
+  levelsData.forEach(lv=>{
+    const locked=lv.num>globalUnlocked;
+    const stars=starsData[lv.num]||0;
+    const el=document.createElement("div");
+    el.className="map-level"+(locked?" lock":"");
+    el.style.left=lv.mapLeft+"%";
+    el.style.top=lv.mapTop+"%";
+    el.innerHTML=`<img src="${getMonsterSprite(lv.num)}" onerror="this.src='${getMonsterSprite(Math.min(lv.num,3))}'">
+      <div class="lv-label">LEVEL ${lv.num}</div>
+      <div class="lv-stars">${"⭐".repeat(stars)}</div>`;
+    el.onclick=()=>openStage(lv.num);
+    container.appendChild(el);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  MANAGER UI
+// ══════════════════════════════════════════════
+function vmBuildFilterOptions(){
+  const sel=document.getElementById("vmFilter");
+  const existing=[...sel.options].map(o=>o.value);
+  const lvNums=[...new Set(vocabData.flatMap(w=>w.levels||[]))].sort((a,b)=>a-b);
+  if(!existing.includes("all"))sel.add(new Option("ทุก Level","all"));
+  lvNums.forEach(n=>{if(!existing.includes(String(n)))sel.add(new Option("Level "+n,String(n)));});
+}
+function vmBuildLvCheckboxes(){
+  const el=document.getElementById("vmLvCheckboxes");
+  const lvNums=levelsData.map(l=>l.num).sort((a,b)=>a-b);
+  if(!lvNums.length)lvNums.push(1,2,3);
+  el.innerHTML=lvNums.map(n=>`<label class="vm-cb-item"><input type="checkbox" class="vmLvCb" value="${n}" ${n===1?"checked":""}> Lv${n}</label>`).join("");
+}
+function vmBuildStgLevelOptions(){
+  const sel=document.getElementById("stgLevel");
+  sel.innerHTML="";
+  const lvNums=levelsData.map(l=>l.num).sort((a,b)=>a-b);
+  if(!lvNums.length)lvNums.push(1,2,3);
+  lvNums.forEach(n=>sel.add(new Option("Level "+n,String(n))));
+}
+
+function vmBuildSummary(){
+  const el=document.getElementById("vmSummary");
+  const lvNums=[...new Set(vocabData.flatMap(w=>w.levels||[]))].sort((a,b)=>a-b);
+  el.innerHTML=lvNums.map(n=>`<div class="vm-stat"><div class="n">${getVocabForLevel(n).length}</div><div class="l">Level ${n}</div></div>`).join("")
+    +`<div class="vm-stat"><div class="n">${getAllWords().length}</div><div class="l">ทั้งหมด</div></div>`;
+}
+
+function vmRenderVocabList(){
+  vmBuildSummary();
+  const filter=document.getElementById("vmFilter").value;
+  const grid=document.getElementById("vmWordGrid");
+  let list=vocabData;
+  if(filter!=="all")list=vocabData.filter(w=>(w.levels||[]).includes(Number(filter)));
+  if(!list.length){grid.innerHTML='<div class="vm-empty">ไม่มีคำศัพท์</div>';return;}
+  const maxLv=levelsData.length?Math.max(...levelsData.map(l=>l.num)):3;
+  grid.innerHTML=list.map(w=>{
+    const name=w.word.replace(".png","");
+    const lvBadges=(w.levels||[]).map(n=>`<span class="vm-lvbadge active-lv">Lv${n}</span>`).join("");
+    return `<div class="vm-word-card">
+      <button class="vm-del-btn" onclick="vmDeleteWord('${w.word}')">🗑</button>
+      <div class="vm-wc-img"><img src="q_${w.word}" onerror="this.parentElement.innerHTML='<span style=font-size:18px;color:#888>${name[0]?.toUpperCase()||"?"}</span>'" alt="${name}"></div>
+      <div class="vm-wc-name">${name}</div>
+      <div class="vm-lvbadge-row">${lvBadges}</div>
+    </div>`;
+  }).join("");
+}
+
+async function vmDeleteWord(word){
+  if(!confirm(`ลบคำศัพท์ "${word.replace(".png","")}"?`))return;
+  try{
+    const data=await apiGet({action:"delVocab",word:word});
+    if(data.status==="ok"){vocabData=vocabData.filter(w=>w.word!==word);vmRenderVocabList();vmToast("ลบแล้ว");}
+    else vmToast("❌ "+(data.message||""));
+  }catch(e){vmToast("❌ เชื่อมต่อไม่ได้");}
+}
+
+function vmUpdatePreview(){
+  const val=document.getElementById("vmNewWord").value.trim().toLowerCase();
+  const pb=document.getElementById("vmPreviewBox");
+  if(!val){pb.innerHTML='<span style="font-size:11px">ยังไม่มีรูป</span>';return;}
+  pb.innerHTML=`<img src="q_${val}.png" onerror="this.parentElement.innerHTML='<span style=font-size:20px;color:#888>${val[0]?.toUpperCase()||"?"}</span>'" alt="${val}">`;
+}
+function vmHandleUpload(input){
+  const file=input.files[0];if(!file)return;
+  document.getElementById("vmUploadedName").textContent="📄 "+file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{document.getElementById("vmPreviewBox").innerHTML=`<img src="${e.target.result}" alt="preview">`;};
+  reader.readAsDataURL(file);
+  const guess=file.name.replace(/\.[^.]+$/,"").toLowerCase().replace(/\s+/g,"_");
+  if(!document.getElementById("vmNewWord").value)document.getElementById("vmNewWord").value=guess;
+}
+function vmClearVocabForm(){
+  document.getElementById("vmNewWord").value="";
+  document.getElementById("vmPreviewBox").innerHTML='<span style="font-size:11px">ยังไม่มีรูป</span>';
+  document.getElementById("vmUploadedName").textContent="";
+  document.getElementById("vmFileInput").value="";
+  document.querySelectorAll(".vmLvCb").forEach((cb,i)=>cb.checked=i===0);
+}
+async function vmAddWord(){
+  let name=document.getElementById("vmNewWord").value.trim().toLowerCase().replace(/\s+/g,"_").replace(/\.png$/,"");
+  if(!name){vmToast("⚠️ กรุณาใส่ชื่อคำศัพท์");return;}
+  if(!/^[a-z0-9_]+$/.test(name)){vmToast("⚠️ ใช้ได้เฉพาะ a-z, 0-9, _");return;}
+  const filename=name+".png";
+  if(vocabData.find(w=>w.word===filename)){vmToast("⚠️ คำ \""+name+"\" มีอยู่แล้ว");return;}
+  const selLvs=[...document.querySelectorAll(".vmLvCb:checked")].map(cb=>Number(cb.value));
+  if(!selLvs.length){vmToast("⚠️ เลือก Level อย่างน้อย 1 อัน");return;}
+  try{
+    const data=await apiGet({action:"addVocab",word:filename,levels:selLvs.join(",")});
+    if(data.status==="ok"){
+      vocabData.push({word:filename,levels:selLvs});
+      vmClearVocabForm();vmBuildFilterOptions();vmRenderVocabList();
+      vmToast("✅ เพิ่ม \""+name+"\" แล้ว!");vmTab("vocab");
+    }else vmToast("❌ "+(data.message||""));
+  }catch(e){vmToast("❌ เชื่อมต่อไม่ได้");}
+}
+
+// LEVEL MANAGER
+function vmRenderLevelList(){
+  const list=document.getElementById("vmLevelList");
+  if(!levelsData.length){list.innerHTML='<div class="vm-empty">ยังไม่มี Level</div>';return;}
+  list.innerHTML=[...levelsData].sort((a,b)=>a.num-b.num).map(lv=>`
+    <div class="level-row">
+      <div class="level-num">${lv.num}</div>
+      <div class="level-info">
+        <div class="level-name">Boss: ${lv.bossName}</div>
+        <div class="level-meta">HP Boss: ${lv.bossHP} &nbsp;·&nbsp; Map: left ${lv.mapLeft}%, top ${lv.mapTop}%</div>
+      </div>
+      <button class="level-del" onclick="vmDeleteLevel(${lv.num})">🗑 ลบ</button>
+    </div>`).join("");
+}
+function vmClearLevelForm(){
+  const nums=levelsData.map(l=>l.num);
+  const next=nums.length?Math.max(...nums)+1:4;
+  document.getElementById("lvNum").value=next;
+  document.getElementById("lvBossName").value="";
+  document.getElementById("lvBossHP").value=10;
+  document.getElementById("lvMapPos").value="50,30";
+}
+async function vmAddLevel(){
+  const num=Number(document.getElementById("lvNum").value);
+  const bossName=document.getElementById("lvBossName").value.trim()||`Boss Lv.${num}`;
+  const bossHP=Number(document.getElementById("lvBossHP").value)||10;
+  const posStr=document.getElementById("lvMapPos").value;
+  const [mapLeft,mapTop]=posStr.split(",").map(s=>Number(s.trim())||50);
+  if(!num||num<1){vmToast("⚠️ กรุณาใส่หมายเลข Level");return;}
+  if(levelsData.find(l=>l.num===num)){vmToast("⚠️ Level "+num+" มีอยู่แล้ว");return;}
+  try{
+    const data=await apiGet({action:"addLevel",num,bossName:encodeURIComponent(bossName),bossHP,mapLeft,mapTop});
+    if(data.status==="ok"){
+      levelsData.push({num,bossName,bossHP,mapLeft,mapTop});
+      levelsData.sort((a,b)=>a.num-b.num);
+      vmRenderLevelList();vmBuildLvCheckboxes();vmBuildStgLevelOptions();
+      vmToast("✅ เพิ่ม Level "+num+" แล้ว!");
+      // อัปเดต globalUnlocked ถ้า level ใหม่
+      buildMap();vmTab("levels");
+    }else vmToast("❌ "+(data.message||""));
+  }catch(e){vmToast("❌ เชื่อมต่อไม่ได้");}
+}
+async function vmDeleteLevel(num){
+  if(!confirm(`ลบ Level ${num}? ด่านทั้งหมดใน Level นี้จะยังคงอยู่`))return;
+  try{
+    const data=await apiGet({action:"delLevel",num});
+    if(data.status==="ok"){levelsData=levelsData.filter(l=>l.num!==num);vmRenderLevelList();buildMap();vmToast("ลบ Level "+num+" แล้ว");}
+    else vmToast("❌ "+(data.message||""));
+  }catch(e){vmToast("❌ เชื่อมต่อไม่ได้");}
+}
+
+// STAGE MANAGER
+function vmRenderStageList(){
+  const list=document.getElementById("vmStageList");
+  if(!stagesData.length){list.innerHTML='<div class="vm-empty">ยังไม่มีด่าน</div>';return;}
+  const typeLabel={battle:"⚔️ Quiz",match:"🧩 Match",memory:"🃏 Memory"};
+  const typeCls={battle:"badge-battle",match:"badge-match",memory:"badge-memory"};
+  list.innerHTML=[...stagesData].sort((a,b)=>a.level-b.level||a.order-b.order).map(s=>`
+    <div class="stage-row">
+      <span class="stage-badge ${typeCls[s.type]||"badge-battle"}">${typeLabel[s.type]||s.type}</span>
+      <div class="stage-info">
+        <div class="stage-label">${s.label}</div>
+        <div class="stage-meta">Level ${s.level} · ลำดับ ${s.order}</div>
+      </div>
+      <span class="stage-lv-badge">Lv${s.level}</span>
+      <button class="stage-del" onclick="vmDeleteStage('${s.id}','${s.label.replace(/'/g,"\\'")}')">🗑 ลบ</button>
+    </div>`).join("");
+}
+function vmClearStageForm(){document.getElementById("stgLabel").value="";document.getElementById("stgType").value="battle";document.getElementById("stgOrder").value="4";}
+async function vmDeleteStage(id,label){
+  if(!confirm(`ลบด่าน "${label}"?`))return;
+  try{
+    const data=await apiGet({action:"delStage",id});
+    if(data.status==="ok"){stagesData=stagesData.filter(s=>s.id!==id);vmRenderStageList();vmToast("ลบด่านแล้ว");}
+    else vmToast("❌ "+(data.message||""));
+  }catch(e){vmToast("❌ เชื่อมต่อไม่ได้");}
+}
+async function vmAddStage(){
+  const label=document.getElementById("stgLabel").value.trim();
+  const level=Number(document.getElementById("stgLevel").value);
+  const type=document.getElementById("stgType").value;
+  const order=Number(document.getElementById("stgOrder").value||99);
+  if(!label){vmToast("⚠️ กรุณาใส่ชื่อด่าน");return;}
+  try{
+    const data=await apiGet({action:"addStage",label:encodeURIComponent(label),level,type,order});
+    if(data.status==="ok"){
+      stagesData.push({id:data.id,level,type,label,order});
+      stagesData.sort((a,b)=>a.level-b.level||a.order-b.order);
+      vmClearStageForm();vmRenderStageList();vmToast("✅ เพิ่มด่านแล้ว!");vmTab("stages");
+    }else vmToast("❌ "+(data.message||""));
+  }catch(e){vmToast("❌ เชื่อมต่อไม่ได้");}
+}
+
+function openVocabManager(){
+  document.getElementById("vocabManager").style.display="block";
+  if(!vocabLoaded)loadVocab();else{vmBuildFilterOptions();vmRenderVocabList();}
+  if(!stagesLoaded)loadStages();else vmRenderStageList();
+  if(!levelsLoaded)loadLevels();else vmRenderLevelList();
+  vmBuildLvCheckboxes();vmBuildStgLevelOptions();
+}
+function closeVocabManager(){document.getElementById("vocabManager").style.display="none";}
+function vmTab(name){
+  const names=["vocab","addvocab","levels","addlevel","stages","addstage"];
+  document.querySelectorAll(".vm-tab").forEach((t,i)=>t.classList.toggle("active",names[i]===name));
+  document.querySelectorAll(".vm-section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("vmTab-"+name).classList.add("active");
+}
+let vmToastTimer;
+function vmToast(msg){const el=document.getElementById("vmToast");el.textContent=msg;el.classList.add("show");clearTimeout(vmToastTimer);vmToastTimer=setTimeout(()=>el.classList.remove("show"),2500);}
+
+// ══════════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════════
+document.getElementById("loginName").addEventListener("input",function(e){let v=e.target.value.replace(/\s+/g," ");const p=v.split(" ");if(p.length>2)v=p[0]+" "+p.slice(1).join("");e.target.value=v;});
+document.getElementById("loginClass").addEventListener("input",function(e){let v=e.target.value.replace(/[^\d]/g,"");if(v.length>=2)v=v[0]+"/"+v[1];e.target.value=v;});
+document.getElementById("loginName").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+document.getElementById("loginClass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+
+async function doLogin(){
+  const name=document.getElementById("loginName").value.trim();
+  const cls=document.getElementById("loginClass").value.trim();
+  const msg=document.getElementById("loginMsg"),ldg=document.getElementById("loginLoading");
+  if(!name){msg.innerText="⚠️ กรุณากรอกชื่อ-นามสกุล";return;}
+  if(!/^[ก-๙A-Za-z]+ [ก-๙A-Za-z]+$/.test(name)){msg.innerText="⚠️ ชื่อและนามสกุล คั่นด้วยเว้นวรรค 1 ครั้ง";return;}
+  if(!/^\d\/\d$/.test(cls)){msg.innerText="⚠️ กรุณากรอกห้องเรียน เช่น 1/1";return;}
+  if(name===ADMIN_NAME&&cls===ADMIN_CLASS){
+    loginScreen.style.display="none";adminPanel.style.display="block";
+    document.getElementById("adminBtn").style.display="block";
+    document.getElementById("vocabBtn").style.display="block";
+    loadAdminData();return;
+  }
+  msg.innerText="";ldg.style.display="block";loginBtn.disabled=true;
+  await Promise.all([loadVocabSilent(),loadStagesSilent(),loadLevelsSilent()]);
+  try{
+    const data=await apiGet({action:"login",name,class:cls});
+    if(data.status==="ok"){
+      currentPlayer={name:data.name,class:data.class};
+      starsData=data.stars||{};
+      unlocked=data.unlocked||{};
+      recalcGlobalUnlocked();afterLogin();
+    }else msg.innerText="❌ "+(data.message||"เข้าสู่ระบบไม่สำเร็จ");
+  }catch(e){currentPlayer={name,class:cls};afterLogin();}
+  ldg.style.display="none";loginBtn.disabled=false;
+}
+function recalcGlobalUnlocked(){
+  globalUnlocked=1;
+  const sorted=[...levelsData].sort((a,b)=>a.num-b.num);
+  for(const lv of sorted){
+    if(isLevelDone(lv.num))globalUnlocked=Math.max(globalUnlocked,lv.num+1);
+    else break;
+  }
+}
+function afterLogin(){
+  playerTag.innerText=`👤 ${currentPlayer.name}  |  ${currentPlayer.class}`;
+  loginScreen.style.display="none";startScreen.style.display="flex";
+  document.getElementById("leaderboardBtn").style.display="block";
+  playMusic();
+}
+
+// ══════════════════════════════════════════════
+//  STAGE POPUP
+// ══════════════════════════════════════════════
+function isStageUnlocked(id){return unlocked[id]===true;}
+function isLevelDone(lv){
+  const lvStages=stagesData.filter(s=>s.level===lv).sort((a,b)=>a.order-b.order);
+  if(!lvStages.length)return false;
+  return lvStages.every(s=>isStageUnlocked(s.id));
+}
+
+let selectedLevel=1;
+async function openStage(lv){
+  if(lv>globalUnlocked){alert("🔒 ยังไม่ปลดล็อก — ต้องผ่านทุกด่านของ Level ก่อนหน้าก่อน");return;}
+  selectedLevel=lv;
+  stageTitle.innerText=`⚔️ LEVEL ${lv} — เลือกด่าน`;
+  stagePopup.style.display="flex";
+  if(!stagesLoaded){
+    document.getElementById("stageLoadingMsg").style.display="block";
+    document.getElementById("stageBtnContainer").innerHTML="";
+    await loadStagesSilent();
+    document.getElementById("stageLoadingMsg").style.display="none";
+  }
+  renderStageBtns(lv);
+}
+function renderStageBtns(lv){
+  const lvStages=stagesData.filter(s=>s.level===lv).sort((a,b)=>a.order-b.order);
+  const container=document.getElementById("stageBtnContainer");
+  if(!lvStages.length){container.innerHTML='<div style="color:#888;font-size:14px;padding:10px;">ยังไม่มีด่านใน Level นี้</div>';return;}
+  container.innerHTML=lvStages.map((s,i)=>{
+    const done=isStageUnlocked(s.id);
+    const locked=i>0&&!isStageUnlocked(lvStages[i-1].id);
+    return `<button class="stage-btn${done?" done":""}${locked?" locked":""}" onclick="enterStageById('${s.id}','${s.type}',${locked})">${s.label}</button>`;
+  }).join("");
+}
+function closeStagePopup(){stagePopup.style.display="none";}
+function enterStageById(stageId,type,locked){
+  if(locked){alert("⚠️ ต้องผ่านด่านก่อนหน้าก่อน");return;}
+  closeStagePopup();
+  currentLevel=selectedLevel;currentStageType=type;currentStageId=stageId;
+  correctScore=0;wrongScore=0;
+  if(type==="battle")startBattle();else if(type==="match")startMatch();else startMemory();
+  stopMusic();
+}
+
+// ══════════════════════════════════════════════
+//  WEAPON
+// ══════════════════════════════════════════════
+function showWeaponOverlay(level,stageType,callback){
+  const wData=getWeapon(level,stageType);
+  document.getElementById("weaponTitle").innerText=wData.name;
+  document.getElementById("weaponDesc").innerText=wData.desc;
+  document.getElementById("weaponImg").src=wData.file;
+  weaponContinueCallback=callback;burstStars();spawnWeaponParticles();
+  document.getElementById("weaponOverlay").classList.add("show");
+}
+function closeWeaponOverlay(){
+  document.getElementById("weaponOverlay").classList.remove("show");
+  document.getElementById("starsBurst").classList.remove("show");
+  document.getElementById("starsBurst").innerHTML="";
+  if(weaponContinueCallback){const fn=weaponContinueCallback;weaponContinueCallback=null;fn();}
+}
+function burstStars(){
+  const burst=document.getElementById("starsBurst");burst.innerHTML="";burst.classList.add("show");
+  const emojis=["⭐","✨","💫","🌟","⚡","🔥","💎"];
+  for(let i=0;i<20;i++){const el=document.createElement("div");el.className="star-p";el.innerText=emojis[Math.floor(Math.random()*emojis.length)];el.style.left=(5+Math.random()*90)+"%";el.style.top=(10+Math.random()*70)+"%";el.style.animationDelay=(Math.random()*0.6)+"s";el.style.animationDuration=(0.8+Math.random()*0.7)+"s";burst.appendChild(el);}
+}
+function spawnWeaponParticles(){
+  const c=document.getElementById("weaponParticles");c.innerHTML="";
+  const colors=["#ffd700","#ff8c00","#00ff88","#00cfff","#ff4fff","#ffffff"];
+  for(let i=0;i<12;i++){const p=document.createElement("div");p.className="wp";p.style.background=colors[Math.floor(Math.random()*colors.length)];p.style.left=(5+Math.random()*90)+"%";p.style.top=(5+Math.random()*90)+"%";p.style.animationDelay=(Math.random()*1)+"s";p.style.animationDuration=(0.7+Math.random()*1)+"s";p.style.animationIterationCount="infinite";c.appendChild(p);}
+}
+
+// ══════════════════════════════════════════════
+//  LEADERBOARD
+// ══════════════════════════════════════════════
+function openLeaderboard(){leaderboardScreen.style.display="block";loadLeaderboard();}
+function closeLeaderboard(){leaderboardScreen.style.display="none";}
+async function loadLeaderboard(){
+  const podium=document.getElementById("lbPodium"),list=document.getElementById("lbList");
+  podium.innerHTML="";list.innerHTML='<div id="lbLoading">⏳ กำลังโหลด...</div>';
+  try{
+    const data=await apiGet({action:"getAll"});
+    const rows=(data.rows||[]).map(r=>{
+      const starsObj=r.stars||{};
+      const totalStars=Object.values(starsObj).reduce((a,b)=>a+(b||0),0);
+      return {...r,starsObj,totalStars,score:calcScore(starsObj,r.correct,r.wrong)};
+    });
+    rows.sort((a,b)=>b.score-a.score||(b.correct-a.correct)||(a.wrong-b.wrong));
+    if(!rows.length){list.innerHTML='<div class="lb-empty">🎮 ยังไม่มีผู้เล่น</div>';return;}
+    const emoji={1:"🥇",2:"🥈",3:"🥉"},cls={1:"rank-1",2:"rank-2",3:"rank-3"};
+    const podiumItems=[{data:rows[1]||null,rank:2},{data:rows[0],rank:1},{data:rows[2]||null,rank:3}];
+    podium.innerHTML="";
+    podiumItems.forEach(pi=>{
+      if(!pi.data)return;const r=pi.data,rk=pi.rank;
+      const lv=Math.min(getPlayerLevel(r),3);
+      const d=document.createElement("div");d.className=`podium-card ${cls[rk]}`;
+      d.innerHTML=`<div class="podium-rank-badge">${emoji[rk]}</div><div class="podium-avatar"><img src="${getPlayerSprite(lv)}" onerror="this.src='player.png'" alt="lv${lv}"></div><div class="podium-name">${r.name}</div><div class="podium-cls">ห้อง ${r.class||"—"}</div><div class="podium-score">${r.score.toLocaleString()} pts</div><div class="podium-stars">${"⭐".repeat(r.totalStars)||"—"}</div><div class="podium-block">${rk}</div>`;
+      podium.appendChild(d);
+    });
+    list.innerHTML="";
+    if(rows.length>3){const sec=document.createElement("div");sec.className="lb-divider";sec.innerHTML=`<span>ผู้เล่นทั้งหมด ${rows.length} คน</span>`;list.appendChild(sec);}
+    rows.forEach((r,i)=>{
+      const rank=i+1,rk=rank===1?"gold":rank===2?"silver":rank===3?"bronze":"";
+      const isMine=currentPlayer&&r.name===currentPlayer.name&&r.class===currentPlayer.class;
+      const lv=Math.min(getPlayerLevel(r),3);
+      const row=document.createElement("div");row.className="lb-row"+(isMine?" mine":"");
+      row.innerHTML=`<div class="lb-rank ${rk}">${rank<=3?["🥇","🥈","🥉"][rank-1]:rank}</div><div class="lb-avatar"><img src="${getPlayerSprite(lv)}" onerror="this.src='player.png'" alt="lv${lv}"></div><div class="lb-info"><div class="lb-name">${r.name}${isMine?" 👈":""}</div><div class="lb-cls">ห้อง ${r.class||"—"}</div></div><div class="lb-stars">${"⭐".repeat(r.totalStars)||"—"}<small>${r.totalStars} ดาว</small></div><div class="lb-correct">${r.correct||0}<small>ถูก / ${r.wrong||0} ผิด</small></div><div class="lb-score">${r.score.toLocaleString()}<small>คะแนน</small></div>`;
+      list.appendChild(row);
+    });
+  }catch(e){list.innerHTML='<div class="lb-empty">❌ โหลดข้อมูลไม่ได้</div>';podium.innerHTML="";}
+}
+
+// ADMIN
+function openAdmin(){adminPanel.style.display="block";loadAdminData();}
+function closeAdmin(){adminPanel.style.display="none";}
+async function loadAdminData(){
+  const tbody=document.getElementById("adminBody");tbody.innerHTML="<tr><td colspan='7'>⏳</td></tr>";
+  try{
+    const data=await apiGet({action:"getAll"});tbody.innerHTML="";
+    (data.rows||[]).forEach((r,i)=>{
+      const s1=r.stars1||0,s2=r.stars2||0,s3=r.stars3||0;
+      tbody.innerHTML+=`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.class}</td><td>${"⭐".repeat(s1)}</td><td>${"⭐".repeat(s2)}</td><td>${"⭐".repeat(s3)}</td><td>${r.correct||0}</td><td>${r.wrong||0}</td><td>${r.lastPlay||"-"}</td></tr>`;
+    });
+    if(!data.rows?.length)tbody.innerHTML="<tr><td colspan='7'>ยังไม่มีข้อมูล</td></tr>";
+  }catch(e){tbody.innerHTML="<tr><td colspan='7'>❌ โหลดไม่ได้</td></tr>";}
+}
+
+// SAVE PROGRESS
+async function saveProgress(){
+  if(!currentPlayer)return;
+  try{
+    await apiGet({
+      action:"save",
+      name:currentPlayer.name,
+      class:currentPlayer.class,
+      unlocked:encodeURIComponent(JSON.stringify(unlocked)),
+      stars:encodeURIComponent(JSON.stringify(starsData)),
+      correct:correctScore,
+      wrong:wrongScore
+    });
+  }catch(err){console.error("save error",err);}
+}
+function updateMap(){recalcGlobalUnlocked();buildMap();}
+function goMap(){startScreen.style.display="none";mapScreen.style.display="block";updateMap();playMusic();}
+function backMap(){
+  resultScreen.style.display="none";matchScreen.style.display="none";memoryScreen.style.display="none";
+  gameScreen.style.display="none";mapScreen.style.display="block";updateMap();playMusic();
+}
+
+// ══════════════════════════════════════════════
+//  BATTLE
+// ══════════════════════════════════════════════
+function startBattle(){
+  index=0;playerHPMax=5;
+  const lvCfg=getLevelConfig(currentLevel);
+  bossHPMax=lvCfg.bossHP||5;playerHPValue=playerHPMax;bossHPValue=bossHPMax;
+  document.getElementById("playerHPName").innerText=currentPlayer?currentPlayer.name.split(" ")[0]:"Hero";
+  document.getElementById("bossHPName").innerText=lvCfg.bossName;
+  document.getElementById("bossSprite").src=getBossSprite(currentLevel);
+  document.getElementById("bossSprite").onerror=function(){this.src=getBossSprite(Math.min(currentLevel,3));this.onerror=null;};
+  document.getElementById("playerSprite").src=getPlayerSprite(currentLevel);
+  document.getElementById("playerSprite").onerror=function(){this.src="player.png";this.onerror=null;};
+  scene.src=getClassroomBg(currentLevel);
+  scene.onerror=function(){this.src=getClassroomBg(Math.min(currentLevel,3));this.onerror=null;};
+  mapScreen.style.display="none";gameScreen.style.display="block";
+  updateHPBars();loadQuestion();
+}
+function updateHPBars(){
+  const pPct=Math.max(0,playerHPValue/playerHPMax*100);
+  document.getElementById("playerHP").style.width=pPct+"%";
+  document.getElementById("playerHPText").innerText=`${Math.max(0,playerHPValue)} / ${playerHPMax}`;
+  const bPct=Math.max(0,bossHPValue/bossHPMax*100);
+  document.getElementById("bossHP").style.width=bPct+"%";
+  document.getElementById("bossHPText").innerText=`${Math.max(0,bossHPValue)} / ${bossHPMax}`;
+}
+function loadQuestion(){
+  clearInterval(timer);startTimer();answers.innerHTML="";
+  const list=getVocabForLevel(currentLevel);
+  if(!list||!list.length){alert("⚠️ ไม่มีคำศัพท์ใน Level นี้");return;}
+  if(index>=list.length)index=0;
+  const correct=list[index];
+  const glowCls=`glow-lv${Math.min(currentLevel,5)}`;
+  question.innerHTML=`<img class="${glowCls}" src="q_${correct}">`;
+  let choices=[correct];const all=getAllWords();
+  while(choices.length<Math.min(3,all.length)){let r=all[Math.floor(Math.random()*all.length)];if(!choices.includes(r))choices.push(r);}
+  choices.sort(()=>Math.random()-0.5);
+  answers.innerHTML=choices.map(c=>`<button class="answer-btn" onclick="check('${c}','${correct}')"><img src="${c}"></button>`).join("");
+  speakWord(correct);
+}
+function startTimer(){
+  clearInterval(timer);timeLeft=30;timerFill.style.width="100%";timerFill.style.background="orange";
+  timer=setInterval(()=>{
+    timeLeft--;timerFill.style.width=(timeLeft/30*100)+"%";
+    if(timeLeft===5){if(!isMuted){sfx.warning.currentTime=0;sfx.warning.play();}timerFill.style.background="red";}
+    if(timeLeft<=0){clearInterval(timer);check("timeout","nope");}
+  },1000);
+}
+function flashScreen(c){const el=document.getElementById("impactFlash");el.className=c==="green"?"flash-green":"flash-red";el.style.opacity="1";setTimeout(()=>{el.style.opacity="0";el.className="";},150);}
+function showImpactIcon(ok){const el=document.getElementById("impactIcon");el.innerText=ok?"⚔️":"💢";el.style.left=ok?"60%":"35%";el.style.top="40%";el.className="icon-popping";setTimeout(()=>{el.className="";el.style.opacity="0";},700);}
+function doPlayerAttack(cb){
+  const sprite=document.getElementById("playerSprite"),boss=document.getElementById("bossSprite");
+  sprite.classList.add("player-attacking");
+  setTimeout(()=>{boss.classList.add("boss-hurt");flashScreen("green");showImpactIcon(true);},300);
+  setTimeout(()=>{sprite.classList.remove("player-attacking");boss.classList.remove("boss-hurt");if(cb)cb();},700);
+}
+function doBossAttack(cb){
+  const boss=document.getElementById("bossSprite"),player=document.getElementById("playerSprite");
+  boss.classList.add("boss-attacking");
+  setTimeout(()=>{player.classList.add("player-hurt");flashScreen("red");showImpactIcon(false);},300);
+  setTimeout(()=>{boss.classList.remove("boss-attacking");player.classList.remove("player-hurt");if(cb)cb();},700);
+}
+function check(choice,correct){
+  if(isPlaying)return;isPlaying=true;clearInterval(timer);answers.style.pointerEvents="none";
+  document.querySelectorAll(".answer-btn").forEach(btn=>{const img=btn.querySelector("img").getAttribute("src");if(img===choice)btn.classList.add(choice===correct&&choice!=="timeout"?"correct":"wrong");});
+  question.classList.add("hide-ui");answers.classList.add("hide-ui");speechBubble.classList.add("hide-ui");
+  if(choice===correct&&choice!=="timeout"){
+    bossHPValue--;correctScore++;if(!isMuted){sfx.correct.currentTime=0;sfx.correct.play();}
+    doPlayerAttack(()=>{updateHPBars();question.classList.remove("hide-ui");answers.classList.remove("hide-ui");speechBubble.classList.remove("hide-ui");answers.style.pointerEvents="auto";isPlaying=false;if(bossHPValue<=0)return winBattle();index++;loadQuestion();});
+  }else{
+    playerHPValue--;wrongScore++;if(!isMuted){sfx.wrong.currentTime=0;sfx.wrong.play();}
+    doBossAttack(()=>{updateHPBars();question.classList.remove("hide-ui");answers.classList.remove("hide-ui");speechBubble.classList.remove("hide-ui");answers.style.pointerEvents="auto";isPlaying=false;if(playerHPValue<=0)return loseBattle();index++;loadQuestion();});
+  }
+}
+function winBattle(){
+  stopMusic();if(!isMuted){sfx.win.currentTime=0;sfx.win.play();}
+  let star=3;if(playerHPValue<=3)star=2;if(playerHPValue<=1)star=1;
+  starsData[currentLevel]=Math.max(starsData[currentLevel]||0,star);
+  if(currentStageId)unlocked[currentStageId]=true;
+  recalcGlobalUnlocked();
+  const ov=document.getElementById("battleOverlay"),tx=document.getElementById("battleOverlayText");
+  tx.innerText="🎉 WIN!";tx.style.color="#ffd700";ov.classList.add("show");
+  setTimeout(()=>{ov.classList.remove("show");saveProgress();showWeaponOverlay(currentLevel,currentStageType,()=>showResult(true,star));},1800);
+}
+function loseBattle(){
+  stopMusic();if(!isMuted){sfx.lose.currentTime=0;sfx.lose.play();}
+  const ov=document.getElementById("battleOverlay"),tx=document.getElementById("battleOverlayText");
+  tx.innerText="💀 GAME OVER";tx.style.color="#ff4444";ov.classList.add("show");
+  setTimeout(()=>{ov.classList.remove("show");showResult(false,0);},1800);
+}
+
+// MATCH
+function startMatch(){
+  matchScreen.style.backgroundImage=`url('${getClassroomBg(currentLevel)}')`;
+  matchSelected=null;matchPairs=0;miniWrongCount=0;
+  const lvWords=getVocabForLevel(currentLevel);
+  matchWords=[...lvWords].sort(()=>Math.random()-0.5).slice(0,Math.min(5,lvWords.length));
+  if(!matchWords.length){alert("⚠️ ไม่มีคำศัพท์ใน Level นี้");return;}
+  matchScore.innerText="คู่ที่เจอ: 0 / "+matchWords.length;
+  mapScreen.style.display="none";matchScreen.style.display="block";buildMatchBoard();
+}
+function buildMatchBoard(){
+  const board=document.getElementById("matchBoard");board.innerHTML="";
+  const imgs=[...matchWords].sort(()=>Math.random()-0.5);
+  const wrds=[...matchWords].sort(()=>Math.random()-0.5);
+  const leftCol=document.createElement("div");leftCol.className="match-col";
+  imgs.forEach(w=>{const el=document.createElement("div");el.className="match-item";el.dataset.value=w;el.dataset.side="img";el.innerHTML=`<img src="q_${w}">`;el.onclick=()=>matchClick(el);leftCol.appendChild(el);});
+  const rightCol=document.createElement("div");rightCol.className="match-col";
+  wrds.forEach(w=>{const el=document.createElement("div");el.className="match-item";el.dataset.value=w;el.dataset.side="word";el.textContent=w.replace(".png","").toUpperCase();el.onclick=()=>matchClick(el);rightCol.appendChild(el);});
+  board.appendChild(leftCol);board.appendChild(rightCol);
+}
+function matchClick(el){
+  if(el.classList.contains("matched"))return;
+  if(!matchSelected){matchSelected=el;el.classList.add("selected");return;}
+  if(matchSelected===el){matchSelected.classList.remove("selected");matchSelected=null;return;}
+  if(matchSelected.dataset.side===el.dataset.side){matchSelected.classList.remove("selected");matchSelected=el;document.querySelectorAll(".match-item").forEach(e=>e.classList.remove("selected"));el.classList.add("selected");return;}
+  if(matchSelected.dataset.value===el.dataset.value){
+    matchSelected.classList.remove("selected");matchSelected.classList.add("matched");el.classList.add("matched");
+    matchSelected=null;matchPairs++;correctScore++;if(!isMuted){sfx.correct.currentTime=0;sfx.correct.play();}
+    matchScore.innerText=`คู่ที่เจอ: ${matchPairs} / ${matchWords.length}`;
+    if(matchPairs>=matchWords.length)setTimeout(()=>winMini("match"),600);
+  }else{
+    if(!isMuted){sfx.wrong.currentTime=0;sfx.wrong.play();}wrongScore++;miniWrongCount++;
+    el.classList.add("wrong-flash");matchSelected.classList.add("wrong-flash");
+    setTimeout(()=>{el.classList.remove("wrong-flash","selected");if(matchSelected)matchSelected.classList.remove("wrong-flash","selected");matchSelected=null;},500);
+  }
+}
+
+// MEMORY
+function startMemory(){
+  memoryScreen.style.backgroundImage=`url('${getClassroomBg(currentLevel)}')`;
+  memFlipped=[];memMatched=0;memLocked=false;miniWrongCount=0;
+  const pool=getVocabForLevel(currentLevel);
+  memWords=pool.slice(0,Math.min(6,pool.length));
+  if(!memWords.length){alert("⚠️ ไม่มีคำศัพท์ใน Level นี้");return;}
+  memoryScore.innerText=`คู่ที่เจอ: 0 / ${memWords.length}`;
+  mapScreen.style.display="none";memoryScreen.style.display="block";buildMemoryGrid();
+}
+function buildMemoryGrid(){
+  const grid=document.getElementById("memoryGrid");grid.innerHTML="";
+  const cardData=[];
+  memWords.forEach(w=>{cardData.push({type:"img",value:w});cardData.push({type:"word",value:w});});
+  cardData.sort(()=>Math.random()-0.5);
+  cardData.forEach((c,i)=>{
+    const card=document.createElement("div");card.className="mem-card";card.dataset.value=c.value;card.dataset.idx=i;
+    if(c.type==="img"){card.innerHTML=`<div class="card-inner"><div class="card-front">❓</div><div class="card-back"><img src="q_${c.value}"></div></div>`;}
+    else{const word=c.value.replace(".png","").toUpperCase();card.innerHTML=`<div class="card-inner"><div class="card-front">❓</div><div class="card-back"><span>${word}</span></div></div>`;}
+    card.onclick=()=>memFlip(card);grid.appendChild(card);
+  });
+}
+function memFlip(card){
+  if(memLocked)return;if(card.classList.contains("flipped")||card.classList.contains("matched"))return;
+  card.classList.add("flipped");memFlipped.push(card);
+  if(memFlipped.length===2){
+    memLocked=true;const [a,b]=memFlipped;
+    if(a.dataset.value===b.dataset.value&&a!==b){
+      setTimeout(()=>{a.classList.add("matched");b.classList.add("matched");memMatched++;correctScore++;if(!isMuted){sfx.correct.currentTime=0;sfx.correct.play();}memoryScore.innerText=`คู่ที่เจอ: ${memMatched} / ${memWords.length}`;memFlipped=[];memLocked=false;if(memMatched>=memWords.length)setTimeout(()=>winMini("memory"),600);},500);
+    }else{wrongScore++;miniWrongCount++;if(!isMuted){sfx.wrong.currentTime=0;sfx.wrong.play();}setTimeout(()=>{a.classList.remove("flipped");b.classList.remove("flipped");memFlipped=[];memLocked=false;},900);}
+  }
+}
+function winMini(type){
+  if(!isMuted){sfx.win.currentTime=0;sfx.win.play();}
+  if(currentStageId)unlocked[currentStageId]=true;
+  const earned=miniStars();starsData[currentLevel]=Math.max(starsData[currentLevel]||0,earned);
+  recalcGlobalUnlocked();saveProgress();
+  matchScreen.style.display="none";memoryScreen.style.display="none";
+  showWeaponOverlay(currentLevel,type,()=>showResult(true,earned));
+}
+function showResult(isWin,star){
+  gameScreen.style.display="none";matchScreen.style.display="none";memoryScreen.style.display="none";
+  resultScreen.style.display="flex";
+  resultTitle.innerText=isWin?"🎉 สำเร็จ!":"💀 พ่ายแพ้";
+  resultStar.innerText="⭐".repeat(star);
+  correctCount.innerText=correctScore;wrongCount.innerText=wrongScore;
+}
+function speakWord(word){
+  if(isMuted)return;
+  let text=word.replace(".png","");
+  const voices=speechSynthesis.getVoices();
+  const femaleVoice=voices.find(v=>v.name.toLowerCase().includes("zira")||v.name.toLowerCase().includes("samantha")||v.name.toLowerCase().includes("google"));
+  const q=new SpeechSynthesisUtterance("What is this? I think it is…");q.lang="en-US";q.rate=0.9;q.pitch=1.1;q.volume=1;if(femaleVoice)q.voice=femaleVoice;
+  const w=new SpeechSynthesisUtterance(text);w.lang="en-US";w.rate=0.9;w.pitch=1.2;w.volume=1;if(femaleVoice)w.voice=femaleVoice;
+  speechSynthesis.cancel();q.onend=()=>{speechSynthesis.speak(w);};speechSynthesis.speak(q);
+}
+function repeatSpeak(){if(gameScreen.style.display!=="block")return;speakWord(getVocabForLevel(currentLevel)[index]);}
+function goHome(){
+  clearInterval(timer);speechSynthesis.cancel();playerHPValue=5;bossHPValue=5;
+  gameScreen.style.display="none";resultScreen.style.display="none";mapScreen.style.display="none";
+  matchScreen.style.display="none";memoryScreen.style.display="none";leaderboardScreen.style.display="none";
+  document.getElementById("weaponOverlay").classList.remove("show");
+  startScreen.style.display="flex";playMusic();
+}
+function showInfo(){startScreen.style.display="none";infoScreen.style.display="flex";}
+function closeInfo(){infoScreen.style.display="none";startScreen.style.display="flex";}
+</script>
+</body>
+</html>
